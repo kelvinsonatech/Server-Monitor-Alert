@@ -80,17 +80,15 @@ export async function runCheck(monitorId: number): Promise<void> {
 
   logger.info({ monitorId, url: monitor.url, status: result.status, responseMs: result.responseMs }, "Check complete");
 
-  const statusChanged = previousStatus !== "unknown" && previousStatus !== result.status;
-  if (statusChanged) {
-    const { botToken, chatId } = await getTelegramSettings();
-    if (botToken && chatId) {
-      const isDown = result.status === "down";
-      const emoji = isDown ? "🔴" : "✅";
-      const label = isDown ? "DOWN" : "BACK UP";
-      const errorPart = isDown && result.error ? `\n<b>Error:</b> ${result.error}` : "";
-      const text = `${emoji} <b>${monitor.name} is ${label}</b>\n<b>URL:</b> ${monitor.url}${errorPart}\n<b>Time:</b> ${new Date().toUTCString()}`;
-      await sendTelegramMessage(botToken, chatId, text);
-    }
+  const { botToken, chatId } = await getTelegramSettings();
+  if (botToken && chatId) {
+    const isDown = result.status === "down";
+    const emoji = isDown ? "🔴" : "✅";
+    const label = isDown ? "DOWN" : "UP";
+    const responsePart = result.responseMs !== null ? `\n<b>Response:</b> ${result.responseMs}ms` : "";
+    const errorPart = isDown && result.error ? `\n<b>Error:</b> ${result.error}` : "";
+    const text = `${emoji} <b>${monitor.name} — ${label}</b>\n<b>URL:</b> ${monitor.url}${responsePart}${errorPart}\n<b>Time:</b> ${new Date().toUTCString()}`;
+    await sendTelegramMessage(botToken, chatId, text);
   }
 }
 
