@@ -3,13 +3,19 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Server monitoring API with Telegram alerts
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: monitors
+    description: Monitor management
+  - name: checks
+    description: Check history
+  - name: settings
+    description: Alert settings
 paths:
   /healthz:
     get:
@@ -24,6 +30,196 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /monitors:
+    get:
+      operationId: listMonitors
+      tags: [monitors]
+      summary: List all monitors
+      responses:
+        "200":
+          description: List of monitors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Monitor"
+    post:
+      operationId: createMonitor
+      tags: [monitors]
+      summary: Add a new monitor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MonitorInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Monitor"
+
+  /monitors/{id}:
+    get:
+      operationId: getMonitor
+      tags: [monitors]
+      summary: Get a monitor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Monitor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Monitor"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateMonitor
+      tags: [monitors]
+      summary: Update a monitor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MonitorUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Monitor"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteMonitor
+      tags: [monitors]
+      summary: Delete a monitor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /monitors/{id}/checks:
+    get:
+      operationId: listChecks
+      tags: [checks]
+      summary: Get check history for a monitor (last 50)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Check history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Check"
+
+  /monitors/{id}/ping:
+    post:
+      operationId: pingMonitor
+      tags: [monitors]
+      summary: Manually trigger a check
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Check result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+
+  /stats:
+    get:
+      operationId: getStats
+      tags: [monitors]
+      summary: Overall uptime stats across all monitors
+      responses:
+        "200":
+          description: Stats summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stats"
+
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get alert settings (Telegram config)
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    patch:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update alert settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsUpdate"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
+  /settings/test-telegram:
+    post:
+      operationId: testTelegram
+      tags: [settings]
+      summary: Send a test Telegram message
+      responses:
+        "200":
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestResult"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +230,120 @@ components:
       required:
         - status
 
+    Monitor:
+      type: object
+      required: [id, name, url, intervalMinutes, status, enabled, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        url:
+          type: string
+        intervalMinutes:
+          type: integer
+        status:
+          type: string
+          enum: [up, down, unknown]
+        enabled:
+          type: boolean
+        lastCheckedAt:
+          type: ["string", "null"]
+        lastResponseMs:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+
+    MonitorInput:
+      type: object
+      required: [name, url]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        url:
+          type: string
+          minLength: 1
+        intervalMinutes:
+          type: integer
+          minimum: 1
+        enabled:
+          type: boolean
+
+    MonitorUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        url:
+          type: string
+          minLength: 1
+        intervalMinutes:
+          type: integer
+          minimum: 1
+        enabled:
+          type: boolean
+
+    Check:
+      type: object
+      required: [id, monitorId, status, checkedAt]
+      properties:
+        id:
+          type: integer
+        monitorId:
+          type: integer
+        status:
+          type: string
+          enum: [up, down]
+        responseMs:
+          type: ["integer", "null"]
+        statusCode:
+          type: ["integer", "null"]
+        error:
+          type: ["string", "null"]
+        checkedAt:
+          type: string
+
+    Stats:
+      type: object
+      required: [totalMonitors, upCount, downCount, unknownCount, overallUptimePct]
+      properties:
+        totalMonitors:
+          type: integer
+        upCount:
+          type: integer
+        downCount:
+          type: integer
+        unknownCount:
+          type: integer
+        overallUptimePct:
+          type: number
+
+    Settings:
+      type: object
+      required: [telegramConfigured]
+      properties:
+        telegramConfigured:
+          type: boolean
+        telegramChatId:
+          type: ["string", "null"]
+        hasBotToken:
+          type: boolean
+
+    SettingsUpdate:
+      type: object
+      properties:
+        telegramBotToken:
+          type: string
+        telegramChatId:
+          type: string
+
+    TestResult:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
