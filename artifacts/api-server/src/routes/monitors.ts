@@ -134,16 +134,6 @@ router.get("/monitors/:id/checks", async (req, res): Promise<void> => {
   res.json(checks);
 });
 
-router.delete("/monitors/:id/checks", async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) {
-    res.status(400).json({ error: "Invalid monitor id" });
-    return;
-  }
-  await db.delete(checksTable).where(eq(checksTable.monitorId, id));
-  res.sendStatus(204);
-});
-
 router.post("/monitors/:id/ping", async (req, res): Promise<void> => {
   const params = PingMonitorParams.safeParse(req.params);
   if (!params.success) {
@@ -158,7 +148,7 @@ router.post("/monitors/:id/ping", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Monitor not found" });
     return;
   }
-  await runCheck(monitor.id, true);
+  await runCheck(monitor.id);
   const [latest] = await db
     .select()
     .from(checksTable)

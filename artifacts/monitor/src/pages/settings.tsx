@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -9,7 +9,7 @@ import {
   getGetSettingsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bell, Send, Plus, Trash2 } from "lucide-react";
+import { Bell, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,10 +28,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const formSchema = z.object({
   telegramBotToken: z.string().optional(),
-  chatIds: z.array(z.object({ value: z.string().min(1, "Chat ID cannot be empty") })),
+  telegramChatId: z.string().optional(),
 });
-
-type FormValues = z.infer<typeof formSchema>;
 
 export default function Settings() {
   const { toast } = useToast();
@@ -44,39 +42,26 @@ export default function Settings() {
   const updateSettings = useUpdateSettings();
   const testTelegram = useTestTelegram();
 
-  const form = useForm<FormValues>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       telegramBotToken: "",
-      chatIds: [{ value: "" }],
+      telegramChatId: "",
     },
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "chatIds",
   });
 
   useEffect(() => {
     if (settings) {
-      const ids = settings.telegramChatId
-        ? settings.telegramChatId.split(",").map((s: string) => s.trim()).filter(Boolean)
-        : [];
       form.reset({
         telegramBotToken: "",
-        chatIds: ids.length > 0 ? ids.map((v: string) => ({ value: v })) : [{ value: "" }],
+        telegramChatId: settings.telegramChatId || "",
       });
     }
   }, [settings]);
 
-  function onSubmit(values: FormValues) {
-    const telegramChatId = values.chatIds
-      .map((c) => c.value.trim())
-      .filter(Boolean)
-      .join(",");
-
+  function onSubmit(values: z.infer<typeof formSchema>) {
     updateSettings.mutate(
-      { data: { telegramBotToken: values.telegramBotToken, telegramChatId } },
+      { data: values },
       {
         onSuccess: () => {
           toast({
@@ -103,7 +88,7 @@ export default function Settings() {
         if (result.success) {
           toast({
             title: "Test message sent",
-            description: result.message,
+            description: "Check your Telegram app for the message.",
           });
         } else {
           toast({
@@ -116,7 +101,7 @@ export default function Settings() {
       onError: () => {
         toast({
           title: "Test failed",
-          description: "Failed to send test message. Check your token and chat IDs.",
+          description: "Failed to send test message. Check your token and chat ID.",
           variant: "destructive",
         });
       },
@@ -145,7 +130,7 @@ export default function Settings() {
             <Alert className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
               <AlertTitle>Telegram not configured</AlertTitle>
               <AlertDescription>
-                You won't receive any alerts until you configure a bot token and at least one chat ID.
+                You won't receive any alerts until you configure a bot token and chat ID.
               </AlertDescription>
             </Alert>
           )}
@@ -179,59 +164,27 @@ export default function Settings() {
                 )}
               />
 
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm font-medium leading-none">Chat IDs</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Add one or more recipients. Message @userinfobot on Telegram to get a chat ID.
-                  </p>
-                </div>
-
-                {fields.map((field, index) => (
-                  <FormField
-                    key={field.id}
-                    control={form.control}
-                    name={`chatIds.${index}.value`}
-                    render={({ field: inputField }) => (
-                      <FormItem>
-                        <FormControl>
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="e.g. 123456789 or @channelname"
-                              {...inputField}
-                              className="font-mono bg-background"
-                              data-testid={`input-chat-id-${index}`}
-                            />
-                            {fields.length > 1 && (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="icon"
-                                onClick={() => remove(index)}
-                                className="shrink-0 text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ))}
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => append({ value: "" })}
-                  className="gap-2 font-mono"
-                >
-                  <Plus className="w-4 h-4" />
-                  ADD RECIPIENT
-                </Button>
-              </div>
+              <FormField
+                control={form.control}
+                name="telegramChatId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Chat ID</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g. 123456789 or @channelname"
+                        {...field}
+                        className="font-mono bg-background"
+                        data-testid="input-chat-id"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Message @userinfobot on Telegram to get your chat ID.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="flex items-center justify-between pt-4">
                 <Button

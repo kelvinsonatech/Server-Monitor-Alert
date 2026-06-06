@@ -2,23 +2,17 @@ import { db, monitorsTable, checksTable, appSettingsTable } from "@workspace/db"
 import { eq } from "drizzle-orm";
 import { logger } from "./logger";
 import { sendTelegramMessage } from "./telegram";
-import { Agent, fetch as undiciFetch } from "undici";
 
 const TIMEOUT_MS = 15000;
-
-const insecureAgent = new Agent({
-  connect: { rejectUnauthorized: false },
-});
 
 export async function pingUrl(url: string): Promise<{ status: "up" | "down"; responseMs: number | null; statusCode: number | null; error: string | null }> {
   const start = Date.now();
   try {
-    const res = await undiciFetch(url, {
+    const res = await fetch(url, {
       method: "GET",
       signal: AbortSignal.timeout(TIMEOUT_MS),
       redirect: "follow",
-      dispatcher: insecureAgent,
-    } as Parameters<typeof undiciFetch>[1]);
+    });
     const responseMs = Date.now() - start;
     const isUp = res.status < 500;
     return {
@@ -49,7 +43,7 @@ async function getTelegramSettings(): Promise<{ botToken: string | null; chatId:
   };
 }
 
-export async function runCheck(monitorId: number, manual = false): Promise<void> {
+export async function runCheck(monitorId: number): Promise<void> {
   const [monitor] = await db
     .select()
     .from(monitorsTable)
@@ -80,37 +74,16 @@ export async function runCheck(monitorId: number, manual = false): Promise<void>
 
   logger.info({ monitorId, url: monitor.url, status: result.status, responseMs: result.responseMs }, "Check complete");
 
-  const isDown = result.status === "down";
-  const shouldAlert = isDown || manual;
-
-  if (shouldAlert) {
+  const statusChanged = previousStatus !== "unknown" && previousStatus !== result.status;
+  if (statusChanged) {
     const { botToken, chatId } = await getTelegramSettings();
     if (botToken && chatId) {
-      const now = new Date().toUTCString();
-      let text: string;
-      if (isDown) {
-        const errorLine = result.error ? `\n⚠️ <b>Reason:</b> <code>${result.error}</code>` : "";
-        text = [
-          `🔴❤️⚠️ <b>ALERT — SERVER DOWN</b> ⚠️❤️🔴`,
-          ``,
-          `📛 <b>Monitor:</b> ${monitor.name}`,
-          `🌐 <b>URL:</b> <code>${monitor.url}</code>${errorLine}`,
-          `🕐 <b>Detected at:</b> ${now}`,
-          ``,
-          `<i>PingAlert will notify you again when it recovers.</i>`,
-        ].join("\n");
-      } else {
-        const respLine = result.responseMs !== null ? `\n⚡ <b>Response:</b> ${result.responseMs}ms` : "";
-        text = [
-          `✅ <b>Manual Check — Server is UP</b>`,
-          ``,
-          `📛 <b>Monitor:</b> ${monitor.name}`,
-          `🌐 <b>URL:</b> <code>${monitor.url}</code>${respLine}`,
-          `🕐 <b>Checked at:</b> ${now}`,
-        ].join("\n");
-      }
-      const ids = chatId.split(",").map((s) => s.trim()).filter(Boolean);
-      await Promise.all(ids.map((id) => sendTelegramMessage(botToken, id, text)));
+      const isDown = result.status === "down";
+      const emoji = isDown ? "🔴" : "✅";
+      const label = isDown ? "DOWN" : "BACK UP";
+      const errorPart = isDown && result.error ? `\n<b>Error:</b> ${result.error}` : "";
+      const text = `${emoji} <b>${monitor.name} is ${label}</b>\n<b>URL:</b> ${monitor.url}${errorPart}\n<b>Time:</b> ${new Date().toUTCString()}`;
+      await sendTelegramMessage(botToken, chatId, text);
     }
   }
 }
