@@ -91,7 +91,7 @@ export async function runCheck(monitorId: number, manual = false): Promise<void>
       if (isDown) {
         const errorLine = result.error ? `\n⚠️ <b>Reason:</b> <code>${result.error}</code>` : "";
         text = [
-          `🔴⚠️ <b>ALERT — ${monitor.name} is DOWN</b> ⚠️🔴`,
+          `⚠️ <b>ALERT — ${monitor.name} IS DOWN</b> ⚠️`,
           ``,
           `📛 <b>Monitor:</b> ${monitor.name}`,
           `🌐 <b>URL:</b> <code>${monitor.url}</code>${errorLine}`,
