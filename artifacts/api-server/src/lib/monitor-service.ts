@@ -49,7 +49,7 @@ async function getTelegramSettings(): Promise<{ botToken: string | null; chatId:
   };
 }
 
-export async function runCheck(monitorId: number): Promise<void> {
+export async function runCheck(monitorId: number, manual = false): Promise<void> {
   const [monitor] = await db
     .select()
     .from(monitorsTable)
@@ -80,34 +80,38 @@ export async function runCheck(monitorId: number): Promise<void> {
 
   logger.info({ monitorId, url: monitor.url, status: result.status, responseMs: result.responseMs }, "Check complete");
 
-  const { botToken, chatId } = await getTelegramSettings();
-  if (botToken && chatId) {
-    const isDown = result.status === "down";
-    const now = new Date().toUTCString();
-    let text: string;
-    if (isDown) {
-      const errorLine = result.error ? `\n⚠️ <b>Reason:</b> <code>${result.error}</code>` : "";
-      text = [
-        `🔴❤️⚠️ <b>ALERT — SERVER DOWN</b> ⚠️❤️🔴`,
-        ``,
-        `📛 <b>Monitor:</b> ${monitor.name}`,
-        `🌐 <b>URL:</b> <code>${monitor.url}</code>${errorLine}`,
-        `🕐 <b>Detected at:</b> ${now}`,
-        ``,
-        `<i>PingAlert will notify you again when it recovers.</i>`,
-      ].join("\n");
-    } else {
-      const respLine = result.responseMs !== null ? `\n⚡ <b>Response:</b> ${result.responseMs}ms` : "";
-      text = [
-        `✅ <b>Server is UP</b>`,
-        ``,
-        `📛 <b>Monitor:</b> ${monitor.name}`,
-        `🌐 <b>URL:</b> <code>${monitor.url}</code>${respLine}`,
-        `🕐 <b>Checked at:</b> ${now}`,
-      ].join("\n");
+  const isDown = result.status === "down";
+  const shouldAlert = isDown || manual;
+
+  if (shouldAlert) {
+    const { botToken, chatId } = await getTelegramSettings();
+    if (botToken && chatId) {
+      const now = new Date().toUTCString();
+      let text: string;
+      if (isDown) {
+        const errorLine = result.error ? `\n⚠️ <b>Reason:</b> <code>${result.error}</code>` : "";
+        text = [
+          `🔴❤️⚠️ <b>ALERT — SERVER DOWN</b> ⚠️❤️🔴`,
+          ``,
+          `📛 <b>Monitor:</b> ${monitor.name}`,
+          `🌐 <b>URL:</b> <code>${monitor.url}</code>${errorLine}`,
+          `🕐 <b>Detected at:</b> ${now}`,
+          ``,
+          `<i>PingAlert will notify you again when it recovers.</i>`,
+        ].join("\n");
+      } else {
+        const respLine = result.responseMs !== null ? `\n⚡ <b>Response:</b> ${result.responseMs}ms` : "";
+        text = [
+          `✅ <b>Manual Check — Server is UP</b>`,
+          ``,
+          `📛 <b>Monitor:</b> ${monitor.name}`,
+          `🌐 <b>URL:</b> <code>${monitor.url}</code>${respLine}`,
+          `🕐 <b>Checked at:</b> ${now}`,
+        ].join("\n");
+      }
+      const ids = chatId.split(",").map((s) => s.trim()).filter(Boolean);
+      await Promise.all(ids.map((id) => sendTelegramMessage(botToken, id, text)));
     }
-    const ids = chatId.split(",").map((s) => s.trim()).filter(Boolean);
-    await Promise.all(ids.map((id) => sendTelegramMessage(botToken, id, text)));
   }
 }
 

@@ -148,7 +148,7 @@ router.post("/monitors/:id/ping", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Monitor not found" });
     return;
   }
-  await runCheck(monitor.id);
+  await runCheck(monitor.id, true);
   const [latest] = await db
     .select()
     .from(checksTable)
