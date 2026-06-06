@@ -39,7 +39,7 @@ async function fetchChecks(id: number) {
 
 export default function MonitorDetail() {
   const params = useParams<{ id: string }>();
-  const monitorId = Number(params.id);
+  const monitorId = Number(params?.id);
   const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();

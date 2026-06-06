@@ -63,7 +63,7 @@ export async function runCheck(monitorId: number, manual = false): Promise<void>
 
   const isDown = result.status === "down";
   const statusChanged = result.status !== previousStatus;
-  const shouldAlert = manual || (isDown && (statusChanged || previousStatus === "unknown"));
+  const shouldAlert = manual || (isDown && statusChanged);
 
   if (shouldAlert) {
     const { botToken, chatId } = await getTelegramSettings();
@@ -116,8 +116,10 @@ export function clearMonitorTimer(monitorId: number): void {
 
 export async function initMonitorScheduler(): Promise<void> {
   const monitors = await db.select().from(monitorsTable).where(eq(monitorsTable.enabled, true));
-  for (const monitor of monitors) {
-    await runCheck(monitor.id);
-    await scheduleMonitor(monitor.id, monitor.intervalMinutes);
-  }
+  await Promise.all(
+    monitors.map(async (monitor) => {
+      await runCheck(monitor.id).catch(() => {});
+      await scheduleMonitor(monitor.id, monitor.intervalMinutes);
+    }),
+  );
 }

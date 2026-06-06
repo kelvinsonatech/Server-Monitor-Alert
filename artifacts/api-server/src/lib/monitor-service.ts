@@ -142,9 +142,11 @@ export function clearMonitorTimer(monitorId: number): void {
 
 export async function initMonitorScheduler(): Promise<void> {
   const monitors = await db.select().from(monitorsTable).where(eq(monitorsTable.enabled, true));
-  for (const monitor of monitors) {
-    await runCheck(monitor.id);
-    await scheduleMonitor(monitor.id, monitor.intervalMinutes);
-  }
+  await Promise.all(
+    monitors.map(async (monitor) => {
+      await runCheck(monitor.id).catch(() => {});
+      await scheduleMonitor(monitor.id, monitor.intervalMinutes);
+    }),
+  );
   logger.info({ count: monitors.length }, "Monitor scheduler initialized");
 }

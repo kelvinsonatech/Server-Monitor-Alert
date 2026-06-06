@@ -1,0 +1,1 @@
+- [Monitor alert semantics](monitor-alert-semantics.md) — web backend alerts on transitions; api-server alerts on every down check (divergence); TS alias-narrowing makes a `previousStatus === "unknown"` clause dead.
