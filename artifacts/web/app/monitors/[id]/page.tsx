@@ -1,12 +1,15 @@
 "use client";
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ClientDate } from "@/components/client-date";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from "recharts";
+
+const ResponseChart = dynamic(
+  () => import("@/components/response-chart").then((m) => m.ResponseChart),
+  { ssr: false, loading: () => <div className="h-[160px]" /> }
+);
 import { ArrowLeft, RefreshCw, Trash2, Activity, Clock, Globe, Pencil, Eraser, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -290,26 +293,7 @@ export default function MonitorDetail() {
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider font-mono">Response Time</CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4">
-              <ResponsiveContainer width="100%" height={160}>
-                <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="msGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(217 91% 60%)" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="hsl(217 91% 60%)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="time" tick={{ fill: "hsl(218 14% 42%)", fontSize: 10, fontFamily: "monospace" }} interval="preserveStartEnd" tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fill: "hsl(218 14% 42%)", fontSize: 10, fontFamily: "monospace" }} tickLine={false} axisLine={false} unit="ms" />
-                  <Tooltip
-                    contentStyle={{ background: "hsl(222 47% 7%)", border: "1px solid hsl(220 30% 18%)", borderRadius: 8, fontSize: 12, fontFamily: "monospace" }}
-                    labelStyle={{ color: "hsl(218 14% 52%)" }}
-                    itemStyle={{ color: "hsl(217 91% 70%)" }}
-                    formatter={(v: number) => [`${v}ms`, "Response"]}
-                  />
-                  <Area type="monotone" dataKey="ms" stroke="hsl(217 91% 60%)" strokeWidth={2} fill="url(#msGradient)" connectNulls={false} dot={false} activeDot={{ r: 3, fill: "hsl(217 91% 60%)", strokeWidth: 0 }} />
-                </AreaChart>
-              </ResponsiveContainer>
+              <ResponseChart data={chartData} />
             </CardContent>
           </Card>
 
