@@ -83,11 +83,29 @@ export async function runCheck(monitorId: number): Promise<void> {
   const { botToken, chatId } = await getTelegramSettings();
   if (botToken && chatId) {
     const isDown = result.status === "down";
-    const emoji = isDown ? "🔴" : "✅";
-    const label = isDown ? "DOWN" : "UP";
-    const responsePart = result.responseMs !== null ? `\n<b>Response:</b> ${result.responseMs}ms` : "";
-    const errorPart = isDown && result.error ? `\n<b>Error:</b> ${result.error}` : "";
-    const text = `${emoji} <b>${monitor.name} — ${label}</b>\n<b>URL:</b> ${monitor.url}${responsePart}${errorPart}\n<b>Time:</b> ${new Date().toUTCString()}`;
+    const now = new Date().toUTCString();
+    let text: string;
+    if (isDown) {
+      const errorLine = result.error ? `\n⚠️ <b>Reason:</b> <code>${result.error}</code>` : "";
+      text = [
+        `🔴❤️⚠️ <b>ALERT — SERVER DOWN</b> ⚠️❤️🔴`,
+        ``,
+        `📛 <b>Monitor:</b> ${monitor.name}`,
+        `🌐 <b>URL:</b> <code>${monitor.url}</code>${errorLine}`,
+        `🕐 <b>Detected at:</b> ${now}`,
+        ``,
+        `<i>PingAlert will notify you again when it recovers.</i>`,
+      ].join("\n");
+    } else {
+      const respLine = result.responseMs !== null ? `\n⚡ <b>Response:</b> ${result.responseMs}ms` : "";
+      text = [
+        `✅ <b>Server is UP</b>`,
+        ``,
+        `📛 <b>Monitor:</b> ${monitor.name}`,
+        `🌐 <b>URL:</b> <code>${monitor.url}</code>${respLine}`,
+        `🕐 <b>Checked at:</b> ${now}`,
+      ].join("\n");
+    }
     const ids = chatId.split(",").map((s) => s.trim()).filter(Boolean);
     await Promise.all(ids.map((id) => sendTelegramMessage(botToken, id, text)));
   }
