@@ -47,23 +47,26 @@ export default function MonitorDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const [mounted, setMounted] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editUrl, setEditUrl] = useState("");
   const [editInterval, setEditInterval] = useState("");
   const [clearingHistory, setClearingHistory] = useState(false);
 
+  useEffect(() => setMounted(true), []);
+
   const { data: monitor, isLoading: monitorLoading } = useQuery({
     queryKey: ["monitor", monitorId],
     queryFn: () => fetchMonitor(monitorId),
-    enabled: !!monitorId,
+    enabled: mounted && !!monitorId,
     refetchInterval: 30000,
   });
 
   const { data: checks, isLoading: checksLoading } = useQuery({
     queryKey: ["checks", monitorId],
     queryFn: () => fetchChecks(monitorId),
-    enabled: !!monitorId,
+    enabled: mounted && !!monitorId,
     refetchInterval: 30000,
   });
 
@@ -134,7 +137,7 @@ export default function MonitorDetail() {
     }
   };
 
-  if (monitorLoading) {
+  if (!mounted || monitorLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-10 w-48" />

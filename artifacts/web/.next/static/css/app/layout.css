@@ -1280,6 +1280,9 @@
     --tw-duration: 200ms;
     transition-duration: 200ms;
   }
+  .running {
+    animation-play-state: running;
+  }
   .group-hover\:border-primary\/30 {
     &:is(:where(.group):hover *) {
       @media (hover: hover) {

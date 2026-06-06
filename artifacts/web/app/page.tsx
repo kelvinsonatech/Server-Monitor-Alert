@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ClientDate } from "@/components/client-date";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -220,17 +220,22 @@ function MonitorCard({ monitor }: { monitor: any }) {
 }
 
 export default function Dashboard() {
+  const [mounted, setMounted] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["stats"],
     queryFn: fetchStats,
+    enabled: mounted,
     refetchInterval: 30000,
   });
 
   const { data: monitors, isLoading: monitorsLoading } = useQuery({
     queryKey: ["monitors"],
     queryFn: fetchMonitors,
+    enabled: mounted,
     refetchInterval: 30000,
   });
 
@@ -264,7 +269,7 @@ export default function Dashboard() {
             <TrendingUp className="w-4 h-4 text-primary/60" />
           </CardHeader>
           <CardContent className="px-4 pb-4">
-            {statsLoading
+            {!mounted || statsLoading
               ? <Skeleton className="h-8 w-24 mt-1" />
               : <div className="text-2xl font-bold font-mono mt-1">{stats?.overallUptimePct?.toFixed(2) ?? "0.00"}%</div>
             }
@@ -276,7 +281,7 @@ export default function Dashboard() {
             <ArrowUpRight className="w-4 h-4 text-green-500/70" />
           </CardHeader>
           <CardContent className="px-4 pb-4">
-            {statsLoading
+            {!mounted || statsLoading
               ? <Skeleton className="h-8 w-12 mt-1" />
               : <div className="text-2xl font-bold font-mono text-green-400 mt-1">{stats?.upCount ?? 0}</div>
             }
@@ -288,7 +293,7 @@ export default function Dashboard() {
             <ArrowDownRight className="w-4 h-4 text-red-500/70" />
           </CardHeader>
           <CardContent className="px-4 pb-4">
-            {statsLoading
+            {!mounted || statsLoading
               ? <Skeleton className="h-8 w-12 mt-1" />
               : <div className={`text-2xl font-bold font-mono mt-1 ${(stats?.downCount ?? 0) > 0 ? "text-red-400" : "text-muted-foreground"}`}>{stats?.downCount ?? 0}</div>
             }
@@ -300,7 +305,7 @@ export default function Dashboard() {
             <HelpCircle className="w-4 h-4 text-muted-foreground/50" />
           </CardHeader>
           <CardContent className="px-4 pb-4">
-            {statsLoading
+            {!mounted || statsLoading
               ? <Skeleton className="h-8 w-12 mt-1" />
               : <div className="text-2xl font-bold font-mono text-muted-foreground mt-1">{stats?.unknownCount ?? 0}</div>
             }
@@ -312,7 +317,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
             Monitors
-            {monitors && monitors.length > 0 && (
+            {mounted && monitors && monitors.length > 0 && (
               <span className="text-xs font-normal text-muted-foreground bg-muted/60 border border-border/50 px-2 py-0.5 rounded-full font-mono">
                 {monitors.length}
               </span>
@@ -320,7 +325,7 @@ export default function Dashboard() {
           </h2>
         </div>
 
-        {monitorsLoading ? (
+        {!mounted || monitorsLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[1, 2, 3].map((i) => <Skeleton key={i} className="h-36 w-full rounded-xl" />)}
           </div>

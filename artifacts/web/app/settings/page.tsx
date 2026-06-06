@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -44,12 +44,16 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function Settings() {
+  const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  useEffect(() => setMounted(true), []);
 
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ["settings"],
     queryFn: fetchSettings,
+    enabled: mounted,
   });
 
   const updateMutation = useMutation({
@@ -118,13 +122,13 @@ export default function Settings() {
           </div>
         </CardHeader>
         <CardContent className="pt-6 space-y-6">
-          {!settingsLoading && settings?.telegramConfigured && (
+          {mounted && !settingsLoading && settings?.telegramConfigured && (
             <Alert className="bg-green-500/8 text-green-400 border-green-500/20 flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               <AlertDescription className="text-green-400 text-sm">Telegram is configured and active.</AlertDescription>
             </Alert>
           )}
-          {!settingsLoading && !settings?.telegramConfigured && (
+          {mounted && !settingsLoading && !settings?.telegramConfigured && (
             <Alert className="bg-yellow-500/8 text-yellow-400/90 border-yellow-500/20">
               <AlertDescription className="text-sm">
                 <span className="font-semibold">Not configured.</span> You won't receive alerts until you add a bot token and chat ID below.

@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{\"app/monitors/[id]/page.tsx -> @/components/response-chart\":{\"id\":\"app/monitors/[id]/page.tsx -> @/components/response-chart\",\"files\":[\"static/chunks/_app-pages-browser_components_response-chart_tsx.js\"]}}"
+self.__REACT_LOADABLE_MANIFEST="{}"

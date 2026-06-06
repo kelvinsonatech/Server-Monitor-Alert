@@ -1,8 +1,5 @@
 {
   "/api/stats/route": "app/api/stats/route.js",
   "/api/monitors/route": "app/api/monitors/route.js",
-  "/api/monitors/[id]/route": "app/api/monitors/[id]/route.js",
-  "/api/monitors/[id]/checks/route": "app/api/monitors/[id]/checks/route.js",
-  "/page": "app/page.js",
-  "/monitors/[id]/page": "app/monitors/[id]/page.js"
+  "/page": "app/page.js"
 }
