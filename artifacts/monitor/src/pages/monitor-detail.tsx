@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { 
   useGetMonitor, 
@@ -12,7 +12,7 @@ import {
   getGetStatsQueryKey
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, RefreshCw, Trash2, Activity, Clock, Globe, Pencil } from "lucide-react";
+import { ArrowLeft, RefreshCw, Trash2, Activity, Clock, Globe, Pencil, Eraser } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,6 +51,7 @@ export default function MonitorDetail() {
   const [editName, setEditName] = useState("");
   const [editUrl, setEditUrl] = useState("");
   const [editInterval, setEditInterval] = useState("");
+  const [clearingHistory, setClearingHistory] = useState(false);
 
   const { data: monitor, isLoading: monitorLoading } = useGetMonitor(monitorId, {
     query: { enabled: !!monitorId, queryKey: getGetMonitorQueryKey(monitorId), refetchInterval: 30000 }
@@ -92,6 +93,19 @@ export default function MonitorDetail() {
         },
       }
     );
+  };
+
+  const handleClearHistory = async () => {
+    setClearingHistory(true);
+    try {
+      await fetch(`/api/monitors/${monitorId}/checks`, { method: "DELETE" });
+      queryClient.invalidateQueries({ queryKey: getListChecksQueryKey(monitorId) });
+      toast({ title: "History cleared", description: "All check records have been removed." });
+    } catch {
+      toast({ title: "Failed to clear history", variant: "destructive" });
+    } finally {
+      setClearingHistory(false);
+    }
   };
 
   const handlePing = () => {
@@ -290,7 +304,33 @@ export default function MonitorDetail() {
       </div>
 
       <div>
-        <h2 className="text-xl font-bold tracking-tight mb-4">Check History</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold tracking-tight">Check History</h2>
+          {checks && checks.length > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="font-mono gap-2 text-muted-foreground hover:text-destructive hover:border-destructive/50" disabled={clearingHistory}>
+                  <Eraser className="w-3.5 h-3.5" />
+                  {clearingHistory ? "CLEARING..." : "CLEAR HISTORY"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Clear check history?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete all {checks.length} check records for this monitor. The monitor will keep running — only the history is removed.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearHistory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Clear History
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
         <Card className="bg-card/50 border-border">
           {checksLoading ? (
             <div className="p-6 space-y-4">
