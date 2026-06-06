@@ -1,21 +1,25 @@
+import { useState } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { 
   useGetMonitor, 
   useListChecks, 
   usePingMonitor, 
   useDeleteMonitor,
+  useUpdateMonitor,
   getGetMonitorQueryKey,
   getListChecksQueryKey,
   getListMonitorsQueryKey,
   getGetStatsQueryKey
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, RefreshCw, Trash2, Activity, Clock, Globe } from "lucide-react";
+import { ArrowLeft, RefreshCw, Trash2, Activity, Clock, Globe, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -28,6 +32,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export default function MonitorDetail() {
   const { id } = useParams();
@@ -35,6 +46,11 @@ export default function MonitorDetail() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editUrl, setEditUrl] = useState("");
+  const [editInterval, setEditInterval] = useState("");
 
   const { data: monitor, isLoading: monitorLoading } = useGetMonitor(monitorId, {
     query: { enabled: !!monitorId, queryKey: getGetMonitorQueryKey(monitorId), refetchInterval: 30000 }
@@ -46,6 +62,37 @@ export default function MonitorDetail() {
 
   const pingMonitor = usePingMonitor();
   const deleteMonitor = useDeleteMonitor();
+  const updateMonitor = useUpdateMonitor();
+
+  const openEdit = () => {
+    if (!monitor) return;
+    setEditName(monitor.name);
+    setEditUrl(monitor.url);
+    setEditInterval(String(monitor.intervalMinutes));
+    setEditOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    const interval = parseInt(editInterval, 10);
+    if (!editName.trim() || !editUrl.trim() || isNaN(interval) || interval < 1) {
+      toast({ title: "Invalid input", description: "Name, URL and interval are required. Interval must be ≥ 1 minute.", variant: "destructive" });
+      return;
+    }
+    updateMonitor.mutate(
+      { id: monitorId, data: { name: editName.trim(), url: editUrl.trim(), intervalMinutes: interval } },
+      {
+        onSuccess: () => {
+          toast({ title: "Monitor updated" });
+          queryClient.invalidateQueries({ queryKey: getGetMonitorQueryKey(monitorId) });
+          queryClient.invalidateQueries({ queryKey: getListMonitorsQueryKey() });
+          setEditOpen(false);
+        },
+        onError: () => {
+          toast({ title: "Update failed", description: "Could not save changes.", variant: "destructive" });
+        },
+      }
+    );
+  };
 
   const handlePing = () => {
     pingMonitor.mutate(
@@ -57,11 +104,7 @@ export default function MonitorDetail() {
           queryClient.invalidateQueries({ queryKey: getListChecksQueryKey(monitorId) });
         },
         onError: (err: any) => {
-          toast({ 
-            title: "Ping failed", 
-            description: err.message || "Failed to trigger manual check.",
-            variant: "destructive" 
-          });
+          toast({ title: "Ping failed", description: err.message || "Failed to trigger manual check.", variant: "destructive" });
         }
       }
     );
@@ -78,11 +121,7 @@ export default function MonitorDetail() {
           setLocation("/");
         },
         onError: (err: any) => {
-          toast({ 
-            title: "Delete failed", 
-            description: err.message || "Failed to delete monitor.",
-            variant: "destructive" 
-          });
+          toast({ title: "Delete failed", description: err.message || "Failed to delete monitor.", variant: "destructive" });
         }
       }
     );
@@ -123,6 +162,11 @@ export default function MonitorDetail() {
         </div>
         
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={openEdit} className="font-mono">
+            <Pencil className="w-4 h-4 mr-2" />
+            EDIT
+          </Button>
+
           <Button 
             variant="outline" 
             onClick={handlePing} 
@@ -156,6 +200,52 @@ export default function MonitorDetail() {
           </AlertDialog>
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Monitor</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Name</Label>
+              <Input
+                id="edit-name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="font-mono bg-background"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-url">URL</Label>
+              <Input
+                id="edit-url"
+                value={editUrl}
+                onChange={(e) => setEditUrl(e.target.value)}
+                className="font-mono bg-background"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-interval">Check Interval (minutes)</Label>
+              <Input
+                id="edit-interval"
+                type="number"
+                min={1}
+                value={editInterval}
+                onChange={(e) => setEditInterval(e.target.value)}
+                className="font-mono bg-background"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveEdit} disabled={updateMonitor.isPending} className="font-mono">
+              {updateMonitor.isPending ? "SAVING..." : "SAVE CHANGES"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-card/50 border-border">
