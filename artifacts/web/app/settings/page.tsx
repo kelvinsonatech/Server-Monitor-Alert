@@ -4,13 +4,13 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, Send, Plus, Trash2 } from "lucide-react";
+import { Bell, Send, Plus, Trash2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -55,7 +55,7 @@ export default function Settings() {
   const updateMutation = useMutation({
     mutationFn: updateSettings,
     onSuccess: () => {
-      toast({ title: "Settings saved", description: "Telegram configuration has been updated." });
+      toast({ title: "Settings saved", description: "Telegram configuration updated." });
       queryClient.invalidateQueries({ queryKey: ["settings"] });
       form.setValue("telegramBotToken", "");
     },
@@ -101,24 +101,33 @@ export default function Settings() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground mt-1">Configure your alert channels.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <p className="text-muted-foreground text-sm mt-0.5">Configure how you receive alerts.</p>
       </div>
 
-      <Card className="bg-card/50 border-border">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="w-5 h-5" />
-            Telegram Alerts
-          </CardTitle>
-          <CardDescription>Get notified instantly when a monitor goes down or comes back up.</CardDescription>
+      <Card className="bg-card border-border/60">
+        <CardHeader className="border-b border-border/50 pb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <Bell className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-semibold">Telegram Alerts</CardTitle>
+              <CardDescription className="text-sm mt-0.5">Get notified instantly when a monitor goes down or recovers.</CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="pt-6 space-y-6">
+          {!settingsLoading && settings?.telegramConfigured && (
+            <Alert className="bg-green-500/8 text-green-400 border-green-500/20 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <AlertDescription className="text-green-400 text-sm">Telegram is configured and active.</AlertDescription>
+            </Alert>
+          )}
           {!settingsLoading && !settings?.telegramConfigured && (
-            <Alert className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
-              <AlertTitle>Telegram not configured</AlertTitle>
-              <AlertDescription>
-                You won't receive any alerts until you configure a bot token and at least one chat ID.
+            <Alert className="bg-yellow-500/8 text-yellow-400/90 border-yellow-500/20">
+              <AlertDescription className="text-sm">
+                <span className="font-semibold">Not configured.</span> You won't receive alerts until you add a bot token and chat ID below.
               </AlertDescription>
             </Alert>
           )}
@@ -130,17 +139,19 @@ export default function Settings() {
                 name="telegramBotToken"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bot Token</FormLabel>
+                    <FormLabel className="text-sm font-medium">Bot Token</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
                         placeholder={settings?.hasBotToken ? "Leave blank to keep existing token" : "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"}
                         {...field}
-                        className="font-mono bg-background"
+                        className="font-mono text-sm bg-background/80 border-border/80 h-10"
                         data-testid="input-bot-token"
                       />
                     </FormControl>
-                    <FormDescription>Create a bot with @BotFather on Telegram to get your token.</FormDescription>
+                    <FormDescription className="text-xs">
+                      Create a bot with <span className="font-mono text-primary">@BotFather</span> on Telegram to get your token.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -149,7 +160,9 @@ export default function Settings() {
               <div className="space-y-3">
                 <div>
                   <p className="text-sm font-medium leading-none">Chat IDs</p>
-                  <p className="text-sm text-muted-foreground mt-1">Add one or more recipients. Message @userinfobot on Telegram to get a chat ID.</p>
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    One or more recipients. Message <span className="font-mono text-primary">@userinfobot</span> on Telegram to get your chat ID.
+                  </p>
                 </div>
                 {fields.map((field, index) => (
                   <FormField
@@ -163,11 +176,17 @@ export default function Settings() {
                             <Input
                               placeholder="e.g. 123456789 or @channelname"
                               {...inputField}
-                              className="font-mono bg-background"
+                              className="font-mono text-sm bg-background/80 border-border/80 h-10"
                               data-testid={`input-chat-id-${index}`}
                             />
                             {fields.length > 1 && (
-                              <Button type="button" variant="outline" size="icon" onClick={() => remove(index)} className="shrink-0 text-destructive hover:text-destructive">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => remove(index)}
+                                className="shrink-0 h-10 w-10 border-border/70 text-muted-foreground hover:text-destructive hover:border-destructive/40"
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             )}
@@ -178,26 +197,36 @@ export default function Settings() {
                     )}
                   />
                 ))}
-                <Button type="button" variant="outline" size="sm" onClick={() => append({ value: "" })} className="gap-2 font-mono">
-                  <Plus className="w-4 h-4" />
-                  ADD RECIPIENT
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ value: "" })}
+                  className="gap-2 border-border/70 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <Plus className="w-3.5 h-3.5" />Add Recipient
                 </Button>
               </div>
 
-              <div className="flex items-center justify-between pt-4">
+              <div className="flex items-center justify-between pt-2 border-t border-border/50">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => testMutation.mutate()}
                   disabled={!settings?.telegramConfigured || testMutation.isPending}
-                  className="font-mono gap-2"
+                  className="gap-2 border-border/70 text-sm"
                   data-testid="button-test-telegram"
                 >
                   <Send className="w-4 h-4" />
-                  {testMutation.isPending ? "SENDING..." : "SEND TEST MESSAGE"}
+                  {testMutation.isPending ? "Sending…" : "Send Test Message"}
                 </Button>
-                <Button type="submit" disabled={updateMutation.isPending} className="font-mono" data-testid="button-save-settings">
-                  {updateMutation.isPending ? "SAVING..." : "SAVE CONFIGURATION"}
+                <Button
+                  type="submit"
+                  disabled={updateMutation.isPending}
+                  className="shadow-sm shadow-primary/20"
+                  data-testid="button-save-settings"
+                >
+                  {updateMutation.isPending ? "Saving…" : "Save Configuration"}
                 </Button>
               </div>
             </form>

@@ -43,38 +43,38 @@
 }
 
 :root {
-  --background: 224 71% 4%;
-  --foreground: 213 31% 91%;
+  --background: 222 47% 5%;
+  --foreground: 210 20% 92%;
 
-  --muted: 223 47% 11%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted: 220 40% 10%;
+  --muted-foreground: 218 14% 52%;
 
-  --popover: 224 71% 4%;
-  --popover-foreground: 215 20.2% 65.1%;
-  --popover-border: 216 34% 17%;
+  --popover: 222 47% 6%;
+  --popover-foreground: 210 20% 92%;
+  --popover-border: 220 30% 18%;
 
-  --card: 224 71% 4%;
-  --card-foreground: 213 31% 91%;
-  --card-border: 216 34% 17%;
+  --card: 222 47% 7%;
+  --card-foreground: 210 20% 92%;
+  --card-border: 220 30% 15%;
 
-  --border: 216 34% 17%;
-  --input: 216 34% 17%;
+  --border: 220 30% 15%;
+  --input: 220 30% 14%;
 
-  --primary: 210 100% 50%;
-  --primary-foreground: 222.2 47.4% 11.2%;
+  --primary: 217 91% 60%;
+  --primary-foreground: 222 47% 5%;
 
-  --secondary: 222.2 47.4% 11.2%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 220 40% 12%;
+  --secondary-foreground: 210 20% 92%;
 
-  --accent: 216 34% 17%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 220 35% 13%;
+  --accent-foreground: 210 20% 92%;
 
-  --destructive: 0 63% 31%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 98%;
 
-  --ring: 216 34% 17%;
+  --ring: 217 91% 60%;
 
-  --radius: 0.5rem;
+  --radius: 0.625rem;
 
   --app-font-sans: 'Inter', system-ui, sans-serif;
   --app-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
@@ -87,5 +87,16 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     color-scheme: dark;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, hsl(217 91% 60% / 0.07), transparent),
+      radial-gradient(circle at 1px 1px, hsl(210 20% 92% / 0.025) 1px, transparent 0);
+    background-size: auto, 28px 28px;
   }
+}
+
+@layer utilities {
+  .stat-card-blue  { border-top: 2px solid hsl(217 91% 60% / 0.6); }
+  .stat-card-green { border-top: 2px solid hsl(142 71% 45% / 0.6); }
+  .stat-card-red   { border-top: 2px solid hsl(0 72% 51% / 0.5); }
+  .stat-card-gray  { border-top: 2px solid hsl(218 14% 35% / 0.6); }
 }

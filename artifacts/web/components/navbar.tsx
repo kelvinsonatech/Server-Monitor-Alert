@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, Settings } from "lucide-react";
+import { Radio, Settings, LayoutDashboard } from "lucide-react";
 
 export function NavBar() {
   const pathname = usePathname();
@@ -10,29 +10,36 @@ export function NavBar() {
   const isSettings = pathname === `${base}/settings`;
 
   return (
-    <header className="border-b border-border bg-card/30 backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-            <Activity className="w-4 h-4 text-primary" />
+    <header className="border-b border-border/60 bg-card/40 backdrop-blur-md sticky top-0 z-50">
+      <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="relative w-8 h-8 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center group-hover:bg-primary/20 transition-all group-hover:border-primary/40">
+            <Radio className="w-4 h-4 text-primary" />
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full border-2 border-background" />
           </div>
-          <span className="font-bold text-sm tracking-tight font-mono">PINGALERT</span>
+          <div>
+            <span className="font-bold text-sm tracking-widest text-foreground">PINGALERT</span>
+          </div>
         </Link>
 
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border/60">
           <Link
             href="/"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-mono font-medium transition-colors ${
-              !isSettings ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+              !isSettings
+                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Activity className="w-3.5 h-3.5" />
+            <LayoutDashboard className="w-3.5 h-3.5" />
             Monitors
           </Link>
           <Link
             href="/settings"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-mono font-medium transition-colors ${
-              isSettings ? "text-foreground bg-accent" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+              isSettings
+                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Settings className="w-3.5 h-3.5" />

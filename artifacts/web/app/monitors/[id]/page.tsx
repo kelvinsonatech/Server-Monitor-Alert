@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { ArrowLeft, RefreshCw, Trash2, Activity, Clock, Globe, Pencil, Eraser } from "lucide-react";
+import { ArrowLeft, RefreshCw, Trash2, Activity, Clock, Globe, Pencil, Eraser, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
@@ -135,12 +135,12 @@ export default function MonitorDetail() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-[200px] w-full" />
+        <Skeleton className="h-[200px] w-full rounded-xl" />
       </div>
     );
   }
 
-  if (!monitor) return <div>Monitor not found.</div>;
+  if (!monitor) return <div className="text-muted-foreground p-8 text-center">Monitor not found.</div>;
 
   const chartData = checks
     ? [...checks].reverse().map((c: any) => ({
@@ -160,46 +160,57 @@ export default function MonitorDetail() {
     return valid.length > 0 ? Math.round(valid.reduce((a: number, c: any) => a + c.responseMs, 0) / valid.length) : null;
   })();
 
+  const isUp = monitor.status === "up";
+  const isDown = monitor.status === "down";
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/">
-            <Button variant="outline" size="icon" className="h-8 w-8">
+            <Button variant="outline" size="icon" className="h-9 w-9 border-border/70 rounded-lg">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight">{monitor.name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{monitor.name}</h1>
               <StatusBadge status={monitor.status} />
             </div>
-            <p className="text-muted-foreground mt-1 font-mono text-sm flex items-center gap-2">
+            <p className="text-muted-foreground mt-0.5 font-mono text-xs flex items-center gap-1.5">
               <Globe className="w-3 h-3" />{monitor.url}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={openEdit} className="font-mono">
-            <Pencil className="w-4 h-4 mr-2" />EDIT
+          <Button variant="outline" size="sm" onClick={openEdit} className="gap-2 border-border/70 text-xs">
+            <Pencil className="w-3.5 h-3.5" />Edit
           </Button>
-          <Button variant="outline" onClick={() => pingMutation.mutate()} disabled={pingMutation.isPending} className="font-mono">
-            <RefreshCw className={`w-4 h-4 mr-2 ${pingMutation.isPending ? "animate-spin" : ""}`} />
-            PING NOW
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => pingMutation.mutate()}
+            disabled={pingMutation.isPending}
+            className="gap-2 border-border/70 text-xs"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${pingMutation.isPending ? "animate-spin" : ""}`} />
+            Ping Now
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="icon"><Trash2 className="w-4 h-4" /></Button>
+              <Button variant="outline" size="icon" className="h-8 w-8 border-border/70 text-muted-foreground hover:text-destructive hover:border-destructive/50">
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="border-border/80 bg-card">
               <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>This will permanently delete the monitor and all of its history.</AlertDialogDescription>
+                <AlertDialogTitle>Delete this monitor?</AlertDialogTitle>
+                <AlertDialogDescription>This will permanently delete the monitor and all of its history. This cannot be undone.</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => deleteMutation.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                <AlertDialogCancel className="border-border/70">Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => deleteMutation.mutate()} className="bg-destructive hover:bg-destructive/90">
                   Delete Monitor
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -209,137 +220,119 @@ export default function MonitorDetail() {
       </div>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Edit Monitor</DialogTitle></DialogHeader>
+        <DialogContent className="sm:max-w-md border-border/80 bg-card">
+          <DialogHeader><DialogTitle className="text-lg font-semibold">Edit Monitor</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="edit-name">Name</Label>
-              <Input id="edit-name" value={editName} onChange={(e) => setEditName(e.target.value)} className="font-mono bg-background" />
+              <Input id="edit-name" value={editName} onChange={(e) => setEditName(e.target.value)} className="font-mono bg-background/80 border-border/80 h-10" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-url">URL</Label>
-              <Input id="edit-url" value={editUrl} onChange={(e) => setEditUrl(e.target.value)} className="font-mono bg-background" />
+              <Input id="edit-url" value={editUrl} onChange={(e) => setEditUrl(e.target.value)} className="font-mono bg-background/80 border-border/80 h-10" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-interval">Check Interval (minutes)</Label>
-              <Input id="edit-interval" type="number" min={1} value={editInterval} onChange={(e) => setEditInterval(e.target.value)} className="font-mono bg-background" />
+              <Input id="edit-interval" type="number" min={1} value={editInterval} onChange={(e) => setEditInterval(e.target.value)} className="font-mono bg-background/80 border-border/80 h-10 w-32" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveEdit} disabled={updateMutation.isPending} className="font-mono">
-              {updateMutation.isPending ? "SAVING..." : "SAVE CHANGES"}
+            <Button variant="outline" onClick={() => setEditOpen(false)} className="border-border/70">Cancel</Button>
+            <Button onClick={handleSaveEdit} disabled={updateMutation.isPending} className="shadow-sm shadow-primary/20">
+              {updateMutation.isPending ? "Saving…" : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-card/50 border-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Activity className="w-4 h-4" />Interval
-            </CardTitle>
-          </CardHeader>
-          <CardContent><div className="text-2xl font-bold font-mono">{monitor.intervalMinutes}m</div></CardContent>
-        </Card>
-        <Card className="bg-card/50 border-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Clock className="w-4 h-4" />Last Checked
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold font-mono">
-              <ClientDate value={monitor.lastCheckedAt} />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card/50 border-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Activity className="w-4 h-4" />Last Response
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold font-mono">
-              {monitor.lastResponseMs != null ? `${monitor.lastResponseMs}ms` : "-"}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: "Check Interval", icon: Activity, value: `${monitor.intervalMinutes}m` },
+          { label: "Last Checked", icon: Clock, value: <ClientDate value={monitor.lastCheckedAt} /> },
+          { label: "Last Response", icon: Zap, value: monitor.lastResponseMs != null ? `${monitor.lastResponseMs}ms` : "—" },
+        ].map(({ label, icon: Icon, value }) => (
+          <Card key={label} className="bg-card border-border/60">
+            <CardHeader className="pb-1 pt-4 px-4">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Icon className="w-3.5 h-3.5" />{label}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <div className="text-xl font-bold font-mono mt-1">{value}</div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {checks && checks.length > 1 && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <Card className="bg-card/50 border-border">
-              <CardContent className="pt-4 pb-4">
-                <p className="text-xs text-muted-foreground font-mono mb-1">UPTIME (LAST {checks.length} CHECKS)</p>
-                <p className={`text-2xl font-bold font-mono ${uptimePct === 100 ? "text-green-400" : uptimePct > 90 ? "text-yellow-400" : "text-red-400"}`}>{uptimePct}%</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card/50 border-border">
-              <CardContent className="pt-4 pb-4">
-                <p className="text-xs text-muted-foreground font-mono mb-1">AVG RESPONSE</p>
-                <p className="text-2xl font-bold font-mono">{avgMs != null ? `${avgMs}ms` : "—"}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card/50 border-border">
-              <CardContent className="pt-4 pb-4">
-                <p className="text-xs text-muted-foreground font-mono mb-1">TOTAL CHECKS</p>
-                <p className="text-2xl font-bold font-mono">{checks.length}</p>
-              </CardContent>
-            </Card>
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              {
+                label: `UPTIME (${checks.length} CHECKS)`,
+                value: `${uptimePct}%`,
+                color: uptimePct === 100 ? "text-green-400" : uptimePct > 90 ? "text-yellow-400" : "text-red-400",
+              },
+              { label: "AVG RESPONSE", value: avgMs != null ? `${avgMs}ms` : "—", color: "text-foreground" },
+              { label: "TOTAL CHECKS", value: String(checks.length), color: "text-foreground" },
+            ].map(({ label, value, color }) => (
+              <Card key={label} className="bg-card border-border/60">
+                <CardContent className="pt-4 pb-4 px-4">
+                  <p className="text-[10px] text-muted-foreground font-mono tracking-wider mb-1.5">{label}</p>
+                  <p className={`text-2xl font-bold font-mono ${color}`}>{value}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
-          <Card className="bg-card/50 border-border">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground font-mono">RESPONSE TIME (ms)</CardTitle>
+          <Card className="bg-card border-border/60">
+            <CardHeader className="pb-1 pt-4 px-4">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider font-mono">Response Time</CardTitle>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={180}>
-                <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+            <CardContent className="px-4 pb-4">
+              <ResponsiveContainer width="100%" height={160}>
+                <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="msGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                      <stop offset="5%" stopColor="hsl(217 91% 60%)" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="hsl(217 91% 60%)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="time" tick={{ fill: "#6b7280", fontSize: 10, fontFamily: "monospace" }} interval="preserveStartEnd" tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fill: "#6b7280", fontSize: 10, fontFamily: "monospace" }} tickLine={false} axisLine={false} unit="ms" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <XAxis dataKey="time" tick={{ fill: "hsl(218 14% 42%)", fontSize: 10, fontFamily: "monospace" }} interval="preserveStartEnd" tickLine={false} axisLine={false} />
+                  <YAxis tick={{ fill: "hsl(218 14% 42%)", fontSize: 10, fontFamily: "monospace" }} tickLine={false} axisLine={false} unit="ms" />
                   <Tooltip
-                    contentStyle={{ background: "#1a1a2e", border: "1px solid #374151", borderRadius: 8, fontSize: 12, fontFamily: "monospace" }}
-                    labelStyle={{ color: "#9ca3af" }}
-                    itemStyle={{ color: "#3b82f6" }}
+                    contentStyle={{ background: "hsl(222 47% 7%)", border: "1px solid hsl(220 30% 18%)", borderRadius: 8, fontSize: 12, fontFamily: "monospace" }}
+                    labelStyle={{ color: "hsl(218 14% 52%)" }}
+                    itemStyle={{ color: "hsl(217 91% 70%)" }}
                     formatter={(v: number) => [`${v}ms`, "Response"]}
                   />
-                  <Area type="monotone" dataKey="ms" stroke="#3b82f6" strokeWidth={2} fill="url(#msGradient)" connectNulls={false} dot={false} activeDot={{ r: 4, fill: "#3b82f6" }} />
+                  <Area type="monotone" dataKey="ms" stroke="hsl(217 91% 60%)" strokeWidth={2} fill="url(#msGradient)" connectNulls={false} dot={false} activeDot={{ r: 3, fill: "hsl(217 91% 60%)", strokeWidth: 0 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
-          <Card className="bg-card/50 border-border">
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground font-mono">STATUS HISTORY</CardTitle>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground font-mono">
-                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-green-500/80 inline-block" /> UP</span>
-                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-red-500/80 inline-block" /> DOWN</span>
+          <Card className="bg-card border-border/60">
+            <CardHeader className="pb-2 pt-4 px-4 flex flex-row items-center justify-between">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider font-mono">Status History</CardTitle>
+              <div className="flex items-center gap-4 text-[10px] text-muted-foreground font-mono">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-green-500/80 inline-block" />UP</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-red-500/80 inline-block" />DOWN</span>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="flex gap-1 flex-wrap">
+            <CardContent className="px-4 pb-4">
+              <div className="flex gap-0.5">
                 {[...checks].reverse().map((c: any, i: number) => (
                   <div
                     key={i}
                     suppressHydrationWarning
                     title={`${c.checkedAt} — ${c.status.toUpperCase()}${c.responseMs != null ? ` (${c.responseMs}ms)` : ""}`}
-                    className={`h-7 flex-1 min-w-[10px] max-w-[20px] rounded-sm transition-opacity hover:opacity-70 cursor-default ${c.status === "up" ? "bg-green-500/75" : "bg-red-500/75"}`}
+                    className={`h-6 flex-1 min-w-[6px] max-w-[16px] rounded-sm transition-opacity hover:opacity-60 cursor-default ${c.status === "up" ? "bg-green-500/70" : "bg-red-500/70"}`}
                   />
                 ))}
               </div>
-              <p className="text-[10px] text-muted-foreground font-mono mt-2">← Oldest · Newest →</p>
+              <p className="text-[10px] text-muted-foreground/60 font-mono mt-2">← Oldest · Newest →</p>
             </CardContent>
           </Card>
         </div>
@@ -347,62 +340,71 @@ export default function MonitorDetail() {
 
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold tracking-tight">Check History</h2>
+          <h2 className="text-base font-semibold">Check History</h2>
           {checks && checks.length > 0 && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="font-mono gap-2 text-muted-foreground hover:text-destructive hover:border-destructive/50" disabled={clearingHistory}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 border-border/60 text-muted-foreground hover:text-destructive hover:border-destructive/40 text-xs"
+                  disabled={clearingHistory}
+                >
                   <Eraser className="w-3.5 h-3.5" />
-                  {clearingHistory ? "CLEARING..." : "CLEAR HISTORY"}
+                  {clearingHistory ? "Clearing…" : "Clear History"}
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="border-border/80 bg-card">
                 <AlertDialogHeader>
                   <AlertDialogTitle>Clear check history?</AlertDialogTitle>
                   <AlertDialogDescription>This will permanently delete all {checks.length} check records. The monitor keeps running.</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearHistory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Clear History</AlertDialogAction>
+                  <AlertDialogCancel className="border-border/70">Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearHistory} className="bg-destructive hover:bg-destructive/90">Clear History</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           )}
         </div>
 
-        <Card className="bg-card/50 border-border">
+        <Card className="bg-card border-border/60">
           {checksLoading ? (
-            <div className="p-6 space-y-4">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
+            <div className="p-6 space-y-3">
+              {[1,2,3].map(i => <Skeleton key={i} className="h-9 w-full" />)}
             </div>
           ) : !checks || checks.length === 0 ? (
-            <div className="p-12 text-center text-muted-foreground">No check history available yet.</div>
+            <div className="p-12 text-center text-muted-foreground text-sm">No check history available yet.</div>
           ) : (
             <div className="relative w-full overflow-auto">
-              <table className="w-full text-sm text-left font-mono">
-                <thead className="text-xs text-muted-foreground uppercase bg-muted/50">
-                  <tr>
-                    <th className="px-4 py-3">Time</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Response Time</th>
-                    <th className="px-4 py-3">Status Code</th>
-                    <th className="px-4 py-3">Error</th>
+              <table className="w-full text-sm text-left">
+                <thead>
+                  <tr className="border-b border-border/60">
+                    <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Time</th>
+                    <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Response</th>
+                    <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Code</th>
+                    <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Error</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-border/40">
                   {checks.map((check: any) => (
-                    <tr key={check.id} className="hover:bg-muted/30">
-                      <td className="px-4 py-3 whitespace-nowrap"><ClientDate value={check.checkedAt} format="datetime" /></td>
+                    <tr key={check.id} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-muted-foreground">
+                        <ClientDate value={check.checkedAt} format="datetime" />
+                      </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${check.status === "up" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"}`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold tracking-wide ${
+                          check.status === "up"
+                            ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                            : "bg-red-500/10 text-red-400 border border-red-500/20"
+                        }`}>
                           {check.status.toUpperCase()}
                         </span>
                       </td>
-                      <td className="px-4 py-3">{check.responseMs != null ? `${check.responseMs}ms` : "-"}</td>
-                      <td className="px-4 py-3">{check.statusCode || "-"}</td>
-                      <td className="px-4 py-3 text-red-400 truncate max-w-[200px]">{check.error || "-"}</td>
+                      <td className="px-4 py-3 font-mono text-sm">{check.responseMs != null ? `${check.responseMs}ms` : "—"}</td>
+                      <td className="px-4 py-3 font-mono text-sm text-muted-foreground">{check.statusCode || "—"}</td>
+                      <td className="px-4 py-3 text-red-400 text-sm truncate max-w-[200px]">{check.error || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
