@@ -1,13 +1,32 @@
 import { useState } from "react";
-import { useGetStats, useListMonitors, useCreateMonitor, getGetStatsQueryKey, getListMonitorsQueryKey } from "@workspace/api-client-react";
+import {
+  useGetStats,
+  useListMonitors,
+  useCreateMonitor,
+  useListChecks,
+  getGetStatsQueryKey,
+  getListMonitorsQueryKey,
+  getListChecksQueryKey,
+} from "@workspace/api-client-react";
+import type { Stats } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { Plus, Activity, ArrowUpRight, ArrowDownRight, HelpCircle, Clock, Globe, Zap, X } from "lucide-react";
+import { Plus, Activity, ArrowUpRight, ArrowDownRight, HelpCircle, Clock, Globe, Zap, ServerCog, Gauge as GaugeIcon } from "lucide-react";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  RadialBarChart,
+  RadialBar,
+  PolarAngleAxis,
+  AreaChart,
+  Area,
+  ResponsiveContainer,
+} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { StatusBadge } from "@/components/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -128,6 +147,160 @@ function AddMonitorDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
   );
 }
 
+const STATUS_COLORS = { up: "#22c55e", down: "#ef4444", unknown: "#6b7280" };
+
+function StatusDonut({ stats }: { stats: Stats }) {
+  const data = [
+    { name: "Online", value: stats.upCount, color: STATUS_COLORS.up },
+    { name: "Offline", value: stats.downCount, color: STATUS_COLORS.down },
+    { name: "Unknown", value: stats.unknownCount, color: STATUS_COLORS.unknown },
+  ].filter((d) => d.value > 0);
+
+  const hasData = data.length > 0;
+
+  return (
+    <Card className="bg-card/50 border-border">
+      <CardHeader className="pb-1">
+        <CardTitle className="text-sm font-medium text-muted-foreground font-mono flex items-center gap-2">
+          <ServerCog className="w-4 h-4 text-primary" />
+          FLEET DISTRIBUTION
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="relative h-[180px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={hasData ? data : [{ name: "None", value: 1, color: "#1f2937" }]}
+                dataKey="value"
+                innerRadius={58}
+                outerRadius={80}
+                paddingAngle={hasData ? 3 : 0}
+                strokeWidth={0}
+                startAngle={90}
+                endAngle={-270}
+                isAnimationActive={false}
+              >
+                {(hasData ? data : [{ color: "#1f2937" }]).map((d, i) => (
+                  <Cell key={i} fill={d.color} />
+                ))}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span className="text-3xl font-bold font-mono">{stats.totalMonitors}</span>
+            <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">Monitors</span>
+          </div>
+        </div>
+        <div className="flex items-center justify-center gap-4 mt-2 text-xs font-mono">
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: STATUS_COLORS.up }} />
+            {stats.upCount} up
+          </span>
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: STATUS_COLORS.down }} />
+            {stats.downCount} down
+          </span>
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: STATUS_COLORS.unknown }} />
+            {stats.unknownCount} unknown
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function UptimeGauge({ pct }: { pct: number }) {
+  const color = pct >= 99 ? "#22c55e" : pct >= 95 ? "#eab308" : "#ef4444";
+  const data = [{ name: "uptime", value: pct, fill: color }];
+
+  return (
+    <Card className="bg-card/50 border-border">
+      <CardHeader className="pb-1">
+        <CardTitle className="text-sm font-medium text-muted-foreground font-mono flex items-center gap-2">
+          <GaugeIcon className="w-4 h-4 text-primary" />
+          OVERALL UPTIME
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="relative h-[180px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadialBarChart
+              innerRadius="74%"
+              outerRadius="100%"
+              data={data}
+              startAngle={90}
+              endAngle={-270}
+            >
+              <PolarAngleAxis type="number" domain={[0, 100]} tick={false} axisLine={false} />
+              <RadialBar
+                background={{ fill: "rgba(255,255,255,0.06)" }}
+                dataKey="value"
+                cornerRadius={20}
+                isAnimationActive={false}
+              />
+            </RadialBarChart>
+          </ResponsiveContainer>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span className="text-3xl font-bold font-mono" style={{ color }}>
+              {pct.toFixed(1)}%
+            </span>
+            <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">Availability</span>
+          </div>
+        </div>
+        <p className="text-center text-xs text-muted-foreground font-mono mt-2">
+          Across all monitored endpoints
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MonitorSparkline({ monitorId, isDown }: { monitorId: number; isDown: boolean }) {
+  const { data: checks } = useListChecks(monitorId, {
+    query: { queryKey: getListChecksQueryKey(monitorId), refetchInterval: 30000 },
+  });
+
+  const data = (checks ?? [])
+    .slice(0, 24)
+    .reverse()
+    .map((c) => ({ ms: c.responseMs ?? null }));
+
+  const points = data.filter((d) => d.ms != null).length;
+  if (points < 2) {
+    return <div className="h-10 flex items-center text-[10px] text-muted-foreground/40 font-mono">collecting data…</div>;
+  }
+
+  const color = isDown ? STATUS_COLORS.down : STATUS_COLORS.up;
+  const gradId = `spark-${monitorId}`;
+
+  return (
+    <div className="h-10 -mx-1">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 4, right: 2, left: 2, bottom: 0 }}>
+          <defs>
+            <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.35} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <Area
+            type="monotone"
+            dataKey="ms"
+            stroke={color}
+            strokeWidth={1.5}
+            fill={`url(#${gradId})`}
+            dot={false}
+            connectNulls={false}
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 function MonitorCard({ monitor }: { monitor: any }) {
   const isUp = monitor.status === "up";
   const isDown = monitor.status === "down";
@@ -171,7 +344,12 @@ function MonitorCard({ monitor }: { monitor: any }) {
           </p>
         </div>
 
-        <div className="mt-4 flex items-center gap-5 text-xs text-muted-foreground font-mono">
+        {/* Response time sparkline */}
+        <div className="mt-4">
+          <MonitorSparkline monitorId={monitor.id} isDown={isDown} />
+        </div>
+
+        <div className="mt-3 flex items-center gap-5 text-xs text-muted-foreground font-mono">
           <div className="flex items-center gap-1.5">
             <Zap className="w-3.5 h-3.5" />
             <span>{monitor.lastResponseMs != null ? `${monitor.lastResponseMs}ms` : "—"}</span>
@@ -200,6 +378,8 @@ export default function Dashboard() {
   const { data: monitors, isLoading: monitorsLoading } = useListMonitors({
     query: { queryKey: getListMonitorsQueryKey(), refetchInterval: 30000 },
   });
+
+  const hasMonitors = !!monitors && monitors.length > 0;
 
   return (
     <div className="space-y-8">
@@ -267,6 +447,21 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Visual overview */}
+      {hasMonitors && (
+        statsLoading || !stats ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Skeleton className="h-[270px] w-full rounded-xl" />
+            <Skeleton className="h-[270px] w-full rounded-xl" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <StatusDonut stats={stats} />
+            <UptimeGauge pct={stats.overallUptimePct ?? 0} />
+          </div>
+        )
+      )}
 
       {/* Monitors Grid */}
       <div>

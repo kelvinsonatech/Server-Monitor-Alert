@@ -49,23 +49,23 @@ export function Layout({ children }: LayoutProps) {
   const SidebarContent = () => (
     <>
       {/* Logo */}
-      <div className="p-6 flex items-center gap-3 border-b border-border/60">
-        <div className="relative w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.4)]">
-          <Activity className="w-5 h-5 text-primary-foreground" />
+      <div className="px-4 py-3.5 flex items-center gap-2.5 border-b border-border/60">
+        <div className="relative w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-[0_0_16px_rgba(59,130,246,0.4)]">
+          <Activity className="w-4 h-4 text-primary-foreground" />
           {anyDown && (
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-background animate-pulse" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background animate-pulse" />
           )}
         </div>
-        <div>
-          <span className="font-mono font-bold text-lg tracking-tight">PING<span className="text-primary">ALERT</span></span>
-          <p className="text-[10px] text-muted-foreground font-mono">SERVER MONITOR</p>
+        <div className="leading-tight">
+          <span className="font-mono font-bold text-base tracking-tight">PING<span className="text-primary">ALERT</span></span>
+          <p className="text-[9px] text-muted-foreground font-mono tracking-wider">SERVER MONITOR</p>
         </div>
       </div>
 
       {/* Overall status banner */}
       {stats && stats.totalMonitors > 0 && (
         <div className={cn(
-          "mx-4 mt-4 rounded-lg px-3 py-2.5 flex items-center gap-2.5 text-xs font-mono",
+          "mx-3 mt-3 rounded-md px-2.5 py-2 flex items-center gap-2.5 text-xs font-mono",
           allUp
             ? "bg-green-500/10 border border-green-500/20 text-green-400"
             : "bg-red-500/10 border border-red-500/20 text-red-400"
@@ -82,14 +82,14 @@ export function Layout({ children }: LayoutProps) {
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-4 flex flex-col gap-1">
-        <p className="text-[10px] font-mono text-muted-foreground/60 px-3 mb-2 uppercase tracking-widest">Navigation</p>
+      <nav className="flex-1 px-3 py-3 flex flex-col gap-0.5">
+        <p className="text-[9px] font-mono text-muted-foreground/50 px-2.5 mb-1.5 uppercase tracking-widest">Navigation</p>
         {navItems.map((item) => {
           const active = isActive(item.href);
           return (
             <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}>
               <div className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer group",
+                "flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] font-medium transition-all cursor-pointer group",
                 active
                   ? "bg-primary/15 text-primary border border-primary/20"
                   : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
@@ -104,13 +104,13 @@ export function Layout({ children }: LayoutProps) {
 
         {/* Monitor list in sidebar */}
         {monitors && monitors.length > 0 && (
-          <div className="mt-4">
-            <p className="text-[10px] font-mono text-muted-foreground/60 px-3 mb-2 uppercase tracking-widest">Monitors</p>
+          <div className="mt-3">
+            <p className="text-[9px] font-mono text-muted-foreground/50 px-2.5 mb-1.5 uppercase tracking-widest">Monitors</p>
             <div className="flex flex-col gap-0.5">
               {monitors.map((m) => (
                 <Link key={m.id} href={`/monitors/${m.id}`} onClick={() => setMobileOpen(false)}>
                   <div className={cn(
-                    "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs cursor-pointer transition-all group",
+                    "flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs cursor-pointer transition-all group",
                     location === `/monitors/${m.id}`
                       ? "bg-muted text-foreground"
                       : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
@@ -129,12 +129,12 @@ export function Layout({ children }: LayoutProps) {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-border/60">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/40">
+      <div className="p-3 border-t border-border/60">
+        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-muted/40">
           <Shield className="w-3.5 h-3.5 text-muted-foreground/60" />
-          <div>
+          <div className="leading-tight">
             <p className="text-[10px] font-mono text-muted-foreground/80">PingAlert v1.0</p>
-            <p className="text-[10px] text-muted-foreground/50">Auto-refresh every 30s</p>
+            <p className="text-[9px] text-muted-foreground/50">Auto-refresh every 30s</p>
           </div>
           <div className="ml-auto">
             <Bell className="w-3.5 h-3.5 text-primary/60" />
@@ -171,14 +171,14 @@ export function Layout({ children }: LayoutProps) {
 
       <div className="flex">
         {/* Desktop sidebar */}
-        <aside className="hidden md:flex w-64 min-h-screen border-r border-border bg-card/40 flex-col sticky top-0 self-start">
+        <aside className="hidden md:flex w-52 min-h-screen border-r border-border bg-card/40 flex-col sticky top-0 self-start">
           <SidebarContent />
         </aside>
 
         {/* Main content */}
         <main className="flex-1 min-w-0">
           {/* Top bar with breadcrumbs */}
-          <div className="hidden md:flex items-center gap-2 px-8 py-4 border-b border-border/60 bg-background/60 backdrop-blur sticky top-0 z-10">
+          <div className="hidden md:flex items-center gap-2 px-6 py-3 border-b border-border/60 bg-background/60 backdrop-blur sticky top-0 z-10">
             {breadcrumbs.map((crumb, i) => (
               <span key={i} className="flex items-center gap-2 text-sm">
                 {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" />}
@@ -202,7 +202,7 @@ export function Layout({ children }: LayoutProps) {
             </div>
           </div>
 
-          <div className="max-w-5xl mx-auto p-6 md:p-8">
+          <div className="max-w-6xl mx-auto p-6 md:p-8">
             {children}
           </div>
         </main>
