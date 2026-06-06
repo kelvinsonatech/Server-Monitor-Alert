@@ -168,7 +168,7 @@ function StatusDonut({ stats }: { stats: Stats }) {
       </CardHeader>
       <CardContent>
         <div className="relative h-[180px]">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={180}>
             <PieChart>
               <Pie
                 data={hasData ? data : [{ name: "None", value: 1, color: "#1f2937" }]}
@@ -225,7 +225,7 @@ function UptimeGauge({ pct }: { pct: number }) {
       </CardHeader>
       <CardContent>
         <div className="relative h-[180px]">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={180}>
             <RadialBarChart
               innerRadius="74%"
               outerRadius="100%"
@@ -277,7 +277,7 @@ function MonitorSparkline({ monitorId, isDown }: { monitorId: number; isDown: bo
 
   return (
     <div className="h-10 -mx-1">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={40}>
         <AreaChart data={data} margin={{ top: 4, right: 2, left: 2, bottom: 0 }}>
           <defs>
             <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
