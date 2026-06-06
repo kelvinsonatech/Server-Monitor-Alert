@@ -2,17 +2,23 @@ import { db, monitorsTable, checksTable, appSettingsTable } from "@workspace/db"
 import { eq } from "drizzle-orm";
 import { logger } from "./logger";
 import { sendTelegramMessage } from "./telegram";
+import { Agent, fetch as undiciFetch } from "undici";
 
 const TIMEOUT_MS = 15000;
+
+const insecureAgent = new Agent({
+  connect: { rejectUnauthorized: false },
+});
 
 export async function pingUrl(url: string): Promise<{ status: "up" | "down"; responseMs: number | null; statusCode: number | null; error: string | null }> {
   const start = Date.now();
   try {
-    const res = await fetch(url, {
+    const res = await undiciFetch(url, {
       method: "GET",
       signal: AbortSignal.timeout(TIMEOUT_MS),
       redirect: "follow",
-    });
+      dispatcher: insecureAgent,
+    } as Parameters<typeof undiciFetch>[1]);
     const responseMs = Date.now() - start;
     const isUp = res.status < 500;
     return {
