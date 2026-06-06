@@ -43,7 +43,7 @@ export async function runCheck(monitorId: number, manual = false): Promise<void>
   const [monitor] = await db.select().from(monitorsTable).where(eq(monitorsTable.id, monitorId));
   if (!monitor || !monitor.enabled) return;
 
-  const previousStatus = monitor.status;
+  const previousStatus = monitor.status as "up" | "down" | "unknown";
   const result = await pingUrl(monitor.url);
 
   await db.insert(checksTable).values({
@@ -63,7 +63,7 @@ export async function runCheck(monitorId: number, manual = false): Promise<void>
 
   const isDown = result.status === "down";
   const statusChanged = result.status !== previousStatus;
-  const shouldAlert = manual || (isDown && (statusChanged || previousStatus === "unknown"));
+  const shouldAlert = manual || (isDown && (statusChanged || (previousStatus as string) === "unknown"));
 
   if (shouldAlert) {
     const { botToken, chatId } = await getTelegramSettings();

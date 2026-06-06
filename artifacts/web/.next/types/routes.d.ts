@@ -3,7 +3,7 @@
 
 type AppRoutes = "/" | "/monitors/[id]" | "/settings"
 type AppRouteHandlerRoutes = "/api/cron" | "/api/healthz" | "/api/monitors" | "/api/monitors/[id]" | "/api/monitors/[id]/checks" | "/api/monitors/[id]/ping" | "/api/settings" | "/api/settings/test-telegram" | "/api/stats"
-type PageRoutes = "/not-found"
+type PageRoutes = never
 type LayoutRoutes = "/"
 type RedirectRoutes = never
 type RewriteRoutes = never
@@ -22,7 +22,6 @@ interface ParamMap {
   "/api/settings/test-telegram": {}
   "/api/stats": {}
   "/monitors/[id]": { "id": string; }
-  "/not-found": {}
   "/settings": {}
 }
 
