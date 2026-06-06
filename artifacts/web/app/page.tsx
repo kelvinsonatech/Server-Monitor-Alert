@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { ClientDate } from "@/components/client-date";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Activity, ArrowUpRight, ArrowDownRight, HelpCircle, Clock, Globe, Zap, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -175,7 +176,7 @@ function MonitorCard({ monitor }: { monitor: any }) {
           </div>
           <div className="flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5" />
-            <span>{monitor.lastCheckedAt ? new Date(monitor.lastCheckedAt).toLocaleTimeString() : "Never"}</span>
+            <ClientDate value={monitor.lastCheckedAt} />
           </div>
           <div className="flex items-center gap-1.5">
             <Activity className="w-3.5 h-3.5" />

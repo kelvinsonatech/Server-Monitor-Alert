@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { ClientDate } from "@/components/client-date";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -250,7 +251,7 @@ export default function MonitorDetail() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono">
-              {monitor.lastCheckedAt ? new Date(monitor.lastCheckedAt).toLocaleTimeString() : "Never"}
+              <ClientDate value={monitor.lastCheckedAt} />
             </div>
           </CardContent>
         </Card>
@@ -332,7 +333,8 @@ export default function MonitorDetail() {
                 {[...checks].reverse().map((c: any, i: number) => (
                   <div
                     key={i}
-                    title={`${new Date(c.checkedAt).toLocaleString()} — ${c.status.toUpperCase()}${c.responseMs != null ? ` (${c.responseMs}ms)` : ""}`}
+                    suppressHydrationWarning
+                    title={`${c.checkedAt} — ${c.status.toUpperCase()}${c.responseMs != null ? ` (${c.responseMs}ms)` : ""}`}
                     className={`h-7 flex-1 min-w-[10px] max-w-[20px] rounded-sm transition-opacity hover:opacity-70 cursor-default ${c.status === "up" ? "bg-green-500/75" : "bg-red-500/75"}`}
                   />
                 ))}
@@ -392,7 +394,7 @@ export default function MonitorDetail() {
                 <tbody className="divide-y divide-border">
                   {checks.map((check: any) => (
                     <tr key={check.id} className="hover:bg-muted/30">
-                      <td className="px-4 py-3 whitespace-nowrap">{new Date(check.checkedAt).toLocaleString()}</td>
+                      <td className="px-4 py-3 whitespace-nowrap"><ClientDate value={check.checkedAt} format="datetime" /></td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${check.status === "up" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"}`}>
                           {check.status.toUpperCase()}
