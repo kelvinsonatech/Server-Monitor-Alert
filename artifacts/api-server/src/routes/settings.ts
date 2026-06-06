@@ -58,15 +58,17 @@ router.post("/settings/test-telegram", async (_req, res): Promise<void> => {
     res.json({ success: false, message: "Telegram is not configured. Please save your bot token and chat ID first." });
     return;
   }
-  const ok = await sendTelegramMessage(
-    botToken,
-    chatId,
-    "✅ <b>PingAlert test message</b>\nYour Telegram alerts are working correctly."
+  const ids = chatId.split(",").map((s) => s.trim()).filter(Boolean);
+  const results = await Promise.all(
+    ids.map((id) =>
+      sendTelegramMessage(botToken, id, "✅ <b>PingAlert test message</b>\nYour Telegram alerts are working correctly.")
+    )
   );
-  if (ok) {
-    res.json({ success: true, message: "Test message sent successfully. Check your Telegram." });
+  const allOk = results.every(Boolean);
+  if (allOk) {
+    res.json({ success: true, message: `Test message sent to ${ids.length} recipient(s). Check your Telegram.` });
   } else {
-    res.json({ success: false, message: "Failed to send message. Check your bot token and chat ID." });
+    res.json({ success: false, message: "Failed to send to one or more chat IDs. Check your bot token and IDs." });
   }
 });
 

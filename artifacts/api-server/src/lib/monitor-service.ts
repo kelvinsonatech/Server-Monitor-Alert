@@ -88,7 +88,8 @@ export async function runCheck(monitorId: number): Promise<void> {
     const responsePart = result.responseMs !== null ? `\n<b>Response:</b> ${result.responseMs}ms` : "";
     const errorPart = isDown && result.error ? `\n<b>Error:</b> ${result.error}` : "";
     const text = `${emoji} <b>${monitor.name} — ${label}</b>\n<b>URL:</b> ${monitor.url}${responsePart}${errorPart}\n<b>Time:</b> ${new Date().toUTCString()}`;
-    await sendTelegramMessage(botToken, chatId, text);
+    const ids = chatId.split(",").map((s) => s.trim()).filter(Boolean);
+    await Promise.all(ids.map((id) => sendTelegramMessage(botToken, id, text)));
   }
 }
 

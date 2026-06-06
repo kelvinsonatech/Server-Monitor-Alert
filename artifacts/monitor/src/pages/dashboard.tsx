@@ -1,4 +1,4 @@
-import { useGetStats, useListMonitors } from "@workspace/api-client-react";
+import { useGetStats, useListMonitors, getGetStatsQueryKey, getListMonitorsQueryKey } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { Plus, Activity, ArrowUpRight, ArrowDownRight, HelpCircle, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,11 +8,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useGetStats({
-    query: { refetchInterval: 30000 }
+    query: { queryKey: getGetStatsQueryKey(), refetchInterval: 30000 }
   });
   
   const { data: monitors, isLoading: monitorsLoading } = useListMonitors({
-    query: { refetchInterval: 30000 }
+    query: { queryKey: getListMonitorsQueryKey(), refetchInterval: 30000 }
   });
 
   return (
