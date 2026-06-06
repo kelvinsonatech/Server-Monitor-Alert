@@ -1,5 +1,14 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useParams, Link, useLocation } from "wouter";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { 
   useGetMonitor, 
   useListChecks, 
@@ -302,6 +311,126 @@ export default function MonitorDetail() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Charts */}
+      {checks && checks.length > 1 && (() => {
+        const chartData = [...checks].reverse().map((c) => ({
+          time: new Date(c.checkedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          ms: c.responseMs ?? null,
+          status: c.status,
+        }));
+
+        const uptimePct = checks.length > 0
+          ? Math.round((checks.filter((c) => c.status === "up").length / checks.length) * 100)
+          : 100;
+
+        const avgMs = (() => {
+          const valid = checks.filter((c) => c.responseMs != null);
+          return valid.length > 0 ? Math.round(valid.reduce((a, c) => a + (c.responseMs ?? 0), 0) / valid.length) : null;
+        })();
+
+        return (
+          <div className="space-y-4">
+            {/* Mini stats */}
+            <div className="grid grid-cols-3 gap-4">
+              <Card className="bg-card/50 border-border">
+                <CardContent className="pt-4 pb-4">
+                  <p className="text-xs text-muted-foreground font-mono mb-1">UPTIME (LAST {checks.length} CHECKS)</p>
+                  <p className={`text-2xl font-bold font-mono ${uptimePct === 100 ? "text-green-400" : uptimePct > 90 ? "text-yellow-400" : "text-red-400"}`}>
+                    {uptimePct}%
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/50 border-border">
+                <CardContent className="pt-4 pb-4">
+                  <p className="text-xs text-muted-foreground font-mono mb-1">AVG RESPONSE</p>
+                  <p className="text-2xl font-bold font-mono">{avgMs != null ? `${avgMs}ms` : "—"}</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/50 border-border">
+                <CardContent className="pt-4 pb-4">
+                  <p className="text-xs text-muted-foreground font-mono mb-1">TOTAL CHECKS</p>
+                  <p className="text-2xl font-bold font-mono">{checks.length}</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Response time chart */}
+            <Card className="bg-card/50 border-border">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground font-mono">RESPONSE TIME (ms)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={180}>
+                  <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="msGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis
+                      dataKey="time"
+                      tick={{ fill: "#6b7280", fontSize: 10, fontFamily: "monospace" }}
+                      interval="preserveStartEnd"
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      tick={{ fill: "#6b7280", fontSize: 10, fontFamily: "monospace" }}
+                      tickLine={false}
+                      axisLine={false}
+                      unit="ms"
+                    />
+                    <Tooltip
+                      contentStyle={{ background: "#1a1a2e", border: "1px solid #374151", borderRadius: 8, fontSize: 12, fontFamily: "monospace" }}
+                      labelStyle={{ color: "#9ca3af" }}
+                      itemStyle={{ color: "#3b82f6" }}
+                      formatter={(v: number) => [`${v}ms`, "Response"]}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="ms"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      fill="url(#msGradient)"
+                      connectNulls={false}
+                      dot={false}
+                      activeDot={{ r: 4, fill: "#3b82f6" }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Status heatmap */}
+            <Card className="bg-card/50 border-border">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-medium text-muted-foreground font-mono">STATUS HISTORY</CardTitle>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground font-mono">
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-green-500/80 inline-block" /> UP</span>
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-red-500/80 inline-block" /> DOWN</span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-1 flex-wrap">
+                  {[...checks].reverse().map((c, i) => (
+                    <div
+                      key={i}
+                      title={`${new Date(c.checkedAt).toLocaleString()} — ${c.status.toUpperCase()}${c.responseMs != null ? ` (${c.responseMs}ms)` : ""}`}
+                      className={`h-7 flex-1 min-w-[10px] max-w-[20px] rounded-sm transition-opacity hover:opacity-70 cursor-default ${
+                        c.status === "up" ? "bg-green-500/75" : "bg-red-500/75"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground font-mono mt-2">← Oldest · Newest →</p>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      })()}
 
       <div>
         <div className="flex items-center justify-between mb-4">
