@@ -36,6 +36,23 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+function dicebearUrl(seed: string) {
+  return `https://api.dicebear.com/9.x/bottts/svg?seed=${encodeURIComponent(seed)}`;
+}
+
+function MonitorAvatar({ name, size = 48, className = "" }: { name: string; size?: number; className?: string }) {
+  return (
+    <img
+      src={dicebearUrl(name)}
+      alt={name}
+      width={size}
+      height={size}
+      className={className}
+      draggable={false}
+    />
+  );
+}
+
 function AddMonitorDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("https://");
@@ -75,11 +92,17 @@ function AddMonitorDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Plus className="w-4 h-4 text-primary" />
-            </div>
-            Add New Monitor
+          <DialogTitle className="text-xl font-bold flex items-center gap-3">
+            {name.trim() ? (
+              <div className="w-9 h-9 rounded-lg overflow-hidden border border-border bg-muted/40 shrink-0">
+                <MonitorAvatar name={name.trim()} size={36} className="w-full h-full" />
+              </div>
+            ) : (
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Plus className="w-4 h-4 text-primary" />
+              </div>
+            )}
+            {name.trim() ? name.trim() : "Add New Monitor"}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-5 pt-2">
@@ -307,47 +330,57 @@ function MonitorCard({ monitor }: { monitor: any }) {
 
   return (
     <Link href={`/monitors/${monitor.id}`}>
-      <div className={`group relative rounded-xl border p-5 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5 ${
+      <div className={`group rounded-xl border p-5 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5 ${
         isDown
           ? "border-red-500/30 bg-red-500/5 hover:border-red-500/50"
           : isUp
           ? "border-green-500/20 bg-card/50 hover:border-green-500/40"
           : "border-border bg-card/50 hover:border-border/80"
       }`}>
-        {/* Status pulse */}
-        <div className="absolute top-4 right-4 flex items-center gap-2">
-          <div className="relative flex items-center">
-            {isUp && (
-              <span className="absolute inline-flex h-3 w-3 rounded-full bg-green-500 opacity-75 animate-ping" />
-            )}
-            {isDown && (
-              <span className="absolute inline-flex h-3 w-3 rounded-full bg-red-500 opacity-75 animate-ping" />
-            )}
-            <span className={`relative inline-flex h-3 w-3 rounded-full ${
-              isUp ? "bg-green-500" : isDown ? "bg-red-500" : "bg-gray-500"
-            }`} />
-          </div>
-          <span className={`text-xs font-mono font-bold ${
-            isUp ? "text-green-500" : isDown ? "text-red-500" : "text-gray-500"
-          }`}>
-            {monitor.status.toUpperCase()}
-          </span>
-        </div>
 
-        <div className="pr-20">
-          <h3 className="font-semibold text-foreground text-base group-hover:text-primary transition-colors truncate">
-            {monitor.name}
-          </h3>
-          <p className="text-xs text-muted-foreground font-mono mt-0.5 truncate flex items-center gap-1">
-            <Globe className="w-3 h-3 shrink-0" />
-            {monitor.url}
-          </p>
+        {/* Header: avatar + name + status */}
+        <div className="flex items-center gap-3 mb-4">
+          {/* Avatar with status badge */}
+          <div className="relative shrink-0">
+            <div className={`w-12 h-12 rounded-xl overflow-hidden bg-muted/30 border-2 transition-colors ${
+              isDown ? "border-red-500/40" : isUp ? "border-green-500/30" : "border-border/60"
+            }`}>
+              <MonitorAvatar name={monitor.name} size={48} className="w-full h-full" />
+            </div>
+            <div className="absolute -bottom-1 -right-1 flex items-center justify-center">
+              {isUp && <span className="absolute inline-flex h-3.5 w-3.5 rounded-full bg-green-500 opacity-60 animate-ping" />}
+              {isDown && <span className="absolute inline-flex h-3.5 w-3.5 rounded-full bg-red-500 opacity-60 animate-ping" />}
+              <span className={`relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-background ${
+                isUp ? "bg-green-500" : isDown ? "bg-red-500" : "bg-gray-500"
+              }`} />
+            </div>
+          </div>
+
+          {/* Name + URL */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold text-foreground text-base group-hover:text-primary transition-colors leading-tight">
+                {monitor.name}
+              </h3>
+              <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-md shrink-0 ${
+                isUp
+                  ? "text-green-400 bg-green-500/10"
+                  : isDown
+                  ? "text-red-400 bg-red-500/10"
+                  : "text-gray-400 bg-gray-500/10"
+              }`}>
+                {monitor.status.toUpperCase()}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground font-mono mt-1 truncate flex items-center gap-1">
+              <Globe className="w-3 h-3 shrink-0" />
+              {monitor.url}
+            </p>
+          </div>
         </div>
 
         {/* Response time sparkline */}
-        <div className="mt-4">
-          <MonitorSparkline monitorId={monitor.id} isDown={isDown} />
-        </div>
+        <MonitorSparkline monitorId={monitor.id} isDown={isDown} />
 
         <div className="mt-3 flex items-center gap-5 text-xs text-muted-foreground font-mono">
           <div className="flex items-center gap-1.5">
@@ -476,7 +509,7 @@ export default function Dashboard() {
 
         {monitorsLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-36 w-full rounded-xl" />)}
           </div>
         ) : monitors?.length === 0 ? (
           <div

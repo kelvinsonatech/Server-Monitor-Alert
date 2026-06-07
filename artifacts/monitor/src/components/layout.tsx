@@ -110,12 +110,28 @@ export function Layout({ children }: LayoutProps) {
               {monitors.map((m) => (
                 <Link key={m.id} href={`/monitors/${m.id}`} onClick={() => setMobileOpen(false)}>
                   <div className={cn(
-                    "flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs cursor-pointer transition-all group",
+                    "flex items-center gap-2 px-2 py-1.5 rounded-md text-xs cursor-pointer transition-all group",
                     location === `/monitors/${m.id}`
                       ? "bg-muted text-foreground"
                       : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                   )}>
-                    <StatusDot color={m.status === "up" ? "green" : m.status === "down" ? "red" : "gray"} />
+                    {/* Dicebear avatar with status badge */}
+                    <div className="relative shrink-0">
+                      <div className="w-[22px] h-[22px] rounded-md overflow-hidden bg-muted/60">
+                        <img
+                          src={`https://api.dicebear.com/9.x/bottts/svg?seed=${encodeURIComponent(m.name)}`}
+                          alt={m.name}
+                          width={22}
+                          height={22}
+                          className="w-full h-full"
+                          draggable={false}
+                        />
+                      </div>
+                      <span className={cn(
+                        "absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-background",
+                        m.status === "up" ? "bg-green-500" : m.status === "down" ? "bg-red-500" : "bg-gray-500"
+                      )} />
+                    </div>
                     <span className="truncate font-medium">{m.name}</span>
                     {m.lastResponseMs != null && (
                       <span className="ml-auto font-mono text-[10px] text-muted-foreground/60 shrink-0">{m.lastResponseMs}ms</span>
