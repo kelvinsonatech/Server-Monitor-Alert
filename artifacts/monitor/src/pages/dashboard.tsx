@@ -36,6 +36,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MonitorAvatar } from "@/components/monitor-avatar";
+import { cn } from "@/lib/utils";
 
 function AddMonitorDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const [name, setName] = useState("");
@@ -164,7 +165,7 @@ function StatusDonut({ stats }: { stats: Stats }) {
   const hasData = data.length > 0;
 
   return (
-    <Card className="bg-card/50 border-border">
+    <Card className="glass border-border/60 relative overflow-hidden">
       <CardHeader className="pb-1">
         <CardTitle className="text-sm font-medium text-muted-foreground font-mono flex items-center gap-2">
           <ServerCog className="w-4 h-4 text-primary" />
@@ -221,7 +222,7 @@ function UptimeGauge({ pct }: { pct: number }) {
   const data = [{ name: "uptime", value: pct, fill: color }];
 
   return (
-    <Card className="bg-card/50 border-border">
+    <Card className="glass border-border/60 relative overflow-hidden">
       <CardHeader className="pb-1">
         <CardTitle className="text-sm font-medium text-muted-foreground font-mono flex items-center gap-2">
           <GaugeIcon className="w-4 h-4 text-primary" />
@@ -312,13 +313,16 @@ function MonitorCard({ monitor }: { monitor: any }) {
 
   return (
     <Link href={`/monitors/${monitor.id}`}>
-      <div className={`group rounded-xl border p-5 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5 ${
+      <div className={`group relative overflow-hidden rounded-xl border p-5 cursor-pointer transition-all hover:-translate-y-1 glass ${
         isDown
-          ? "border-red-500/30 bg-red-500/5 hover:border-red-500/50"
+          ? "border-red-500/30 hover:border-red-500/50 hover:shadow-[0_18px_50px_-24px_rgba(239,68,68,0.5)]"
           : isUp
-          ? "border-green-500/20 bg-card/50 hover:border-green-500/40"
-          : "border-border bg-card/50 hover:border-border/80"
+          ? "border-green-500/20 hover:border-green-500/40 hover:shadow-[0_18px_50px_-24px_rgba(34,197,94,0.4)]"
+          : "border-border hover:border-border/80"
       }`}>
+        <div className={`absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent to-transparent ${
+          isDown ? "via-red-500/60" : isUp ? "via-green-500/50" : "via-primary/40"
+        }`} />
 
         {/* Header: avatar + name + status */}
         <div className="flex items-center gap-3 mb-4">
@@ -385,12 +389,19 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">System Status</h1>
-          <p className="text-muted-foreground mt-1">Live overview of your infrastructure.</p>
+          <div className="flex items-center gap-2 mb-2 text-[11px] font-mono uppercase tracking-[0.25em] text-primary/80">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
+            </span>
+            Mission Control
+          </div>
+          <h1 className="text-4xl font-extrabold tracking-tight text-gradient">System Status</h1>
+          <p className="text-muted-foreground mt-1.5">Real-time telemetry across your infrastructure.</p>
         </div>
-        <Button onClick={() => setAddOpen(true)} className="gap-2 font-mono">
+        <Button onClick={() => setAddOpen(true)} className="gap-2 font-mono glow-soft hover:glow-primary transition-shadow">
           <Plus className="w-4 h-4" />
           ADD MONITOR
         </Button>
@@ -398,52 +409,59 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-card/50 border-border">
+        <Card className="glass border-border/60 relative overflow-hidden group transition-all hover:border-primary/40 hover:-translate-y-0.5">
+          <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Overall Uptime</CardTitle>
+            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider font-mono">Overall Uptime</CardTitle>
             <Activity className="w-4 h-4 text-primary" />
           </CardHeader>
           <CardContent>
-            {statsLoading ? <Skeleton className="h-8 w-24" /> : (
-              <div className="text-2xl font-bold font-mono">
-                {stats?.overallUptimePct?.toFixed(2) ?? "0.00"}%
+            {statsLoading ? <Skeleton className="h-9 w-24" /> : (
+              <div className="text-3xl font-bold font-mono tracking-tight">
+                {stats?.overallUptimePct?.toFixed(2) ?? "0.00"}<span className="text-lg text-muted-foreground">%</span>
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="bg-card/50 border-green-500/20">
+        <Card className="glass border-green-500/25 relative overflow-hidden group transition-all hover:border-green-500/50 hover:-translate-y-0.5">
+          <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-green-500/60 to-transparent" />
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Online</CardTitle>
+            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider font-mono">Online</CardTitle>
             <ArrowUpRight className="w-4 h-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            {statsLoading ? <Skeleton className="h-8 w-16" /> : (
-              <div className="text-2xl font-bold font-mono text-green-500">{stats?.upCount ?? 0}</div>
+            {statsLoading ? <Skeleton className="h-9 w-16" /> : (
+              <div className="text-3xl font-bold font-mono text-green-500 tracking-tight drop-shadow-[0_0_12px_rgba(34,197,94,0.35)]">{stats?.upCount ?? 0}</div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="bg-card/50 border-red-500/20">
+        <Card className="glass border-red-500/25 relative overflow-hidden group transition-all hover:border-red-500/50 hover:-translate-y-0.5">
+          <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-red-500/60 to-transparent" />
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Offline</CardTitle>
+            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider font-mono">Offline</CardTitle>
             <ArrowDownRight className="w-4 h-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            {statsLoading ? <Skeleton className="h-8 w-16" /> : (
-              <div className="text-2xl font-bold font-mono text-red-500">{stats?.downCount ?? 0}</div>
+            {statsLoading ? <Skeleton className="h-9 w-16" /> : (
+              <div className={cn(
+                "text-3xl font-bold font-mono tracking-tight",
+                (stats?.downCount ?? 0) > 0 ? "text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.4)]" : "text-muted-foreground/70"
+              )}>{stats?.downCount ?? 0}</div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="bg-card/50 border-border">
+        <Card className="glass border-border/60 relative overflow-hidden group transition-all hover:border-border hover:-translate-y-0.5">
+          <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-gray-500/50 to-transparent" />
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Unknown</CardTitle>
+            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider font-mono">Unknown</CardTitle>
             <HelpCircle className="w-4 h-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            {statsLoading ? <Skeleton className="h-8 w-16" /> : (
-              <div className="text-2xl font-bold font-mono text-gray-500">{stats?.unknownCount ?? 0}</div>
+            {statsLoading ? <Skeleton className="h-9 w-16" /> : (
+              <div className="text-3xl font-bold font-mono text-gray-400 tracking-tight">{stats?.unknownCount ?? 0}</div>
             )}
           </CardContent>
         </Card>
@@ -467,10 +485,11 @@ export default function Dashboard() {
       {/* Monitors Grid */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold tracking-tight">
+          <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
+            <span className="w-1 h-5 rounded-full bg-gradient-to-b from-primary to-sky-400" />
             Monitors
             {monitors && monitors.length > 0 && (
-              <span className="ml-2 text-sm font-normal text-muted-foreground font-mono">({monitors.length})</span>
+              <span className="text-sm font-normal text-muted-foreground font-mono">({monitors.length})</span>
             )}
           </h2>
         </div>
