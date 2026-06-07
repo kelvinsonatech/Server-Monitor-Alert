@@ -26,6 +26,7 @@ import { ArrowLeft, RefreshCw, Trash2, Activity, Clock, Globe, Pencil, Eraser } 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
+import { MonitorAvatar } from "@/components/monitor-avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -172,22 +173,8 @@ export default function MonitorDetail() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          {/* Dicebear avatar */}
-          <div className="relative shrink-0">
-            <div className="w-14 h-14 rounded-xl overflow-hidden bg-muted/40 border border-border">
-              <img
-                src={`https://api.dicebear.com/9.x/bottts/svg?seed=${encodeURIComponent(monitor.name)}`}
-                alt={monitor.name}
-                width={56}
-                height={56}
-                className="w-full h-full"
-                draggable={false}
-              />
-            </div>
-            <span className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-background ${
-              monitor.status === "up" ? "bg-green-500" : monitor.status === "down" ? "bg-red-500" : "bg-gray-500"
-            }`} />
-          </div>
+          {/* Cartoon avatar */}
+          <MonitorAvatar name={monitor.name} size={56} status={monitor.status} pulse />
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold tracking-tight">{monitor.name}</h1>

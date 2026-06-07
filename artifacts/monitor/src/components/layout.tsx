@@ -3,14 +3,10 @@ import { Activity, LayoutDashboard, Settings, Bell, ChevronRight, Menu, X, Shiel
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useGetStats, useListMonitors, getGetStatsQueryKey, getListMonitorsQueryKey } from "@workspace/api-client-react";
+import { MonitorAvatar } from "@/components/monitor-avatar";
 
 interface LayoutProps {
   children: React.ReactNode;
-}
-
-function StatusDot({ color }: { color: "green" | "red" | "gray" }) {
-  const map = { green: "bg-green-500", red: "bg-red-500", gray: "bg-gray-500" };
-  return <span className={`inline-block w-2 h-2 rounded-full ${map[color]}`} />;
 }
 
 export function Layout({ children }: LayoutProps) {
@@ -115,23 +111,7 @@ export function Layout({ children }: LayoutProps) {
                       ? "bg-muted text-foreground"
                       : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                   )}>
-                    {/* Dicebear avatar with status badge */}
-                    <div className="relative shrink-0">
-                      <div className="w-[22px] h-[22px] rounded-md overflow-hidden bg-muted/60">
-                        <img
-                          src={`https://api.dicebear.com/9.x/bottts/svg?seed=${encodeURIComponent(m.name)}`}
-                          alt={m.name}
-                          width={22}
-                          height={22}
-                          className="w-full h-full"
-                          draggable={false}
-                        />
-                      </div>
-                      <span className={cn(
-                        "absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-background",
-                        m.status === "up" ? "bg-green-500" : m.status === "down" ? "bg-red-500" : "bg-gray-500"
-                      )} />
-                    </div>
+                    <MonitorAvatar name={m.name} size={24} status={m.status} />
                     <span className="truncate font-medium">{m.name}</span>
                     {m.lastResponseMs != null && (
                       <span className="ml-auto font-mono text-[10px] text-muted-foreground/60 shrink-0">{m.lastResponseMs}ms</span>

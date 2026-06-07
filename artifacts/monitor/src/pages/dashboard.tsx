@@ -35,23 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-function dicebearUrl(seed: string) {
-  return `https://api.dicebear.com/9.x/bottts/svg?seed=${encodeURIComponent(seed)}`;
-}
-
-function MonitorAvatar({ name, size = 48, className = "" }: { name: string; size?: number; className?: string }) {
-  return (
-    <img
-      src={dicebearUrl(name)}
-      alt={name}
-      width={size}
-      height={size}
-      className={className}
-      draggable={false}
-    />
-  );
-}
+import { MonitorAvatar } from "@/components/monitor-avatar";
 
 function AddMonitorDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const [name, setName] = useState("");
@@ -94,11 +78,9 @@ function AddMonitorDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-3">
             {name.trim() ? (
-              <div className="w-9 h-9 rounded-lg overflow-hidden border border-border bg-muted/40 shrink-0">
-                <MonitorAvatar name={name.trim()} size={36} className="w-full h-full" />
-              </div>
+              <MonitorAvatar name={name.trim()} size={40} showStatus={false} />
             ) : (
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <Plus className="w-4 h-4 text-primary" />
               </div>
             )}
@@ -340,21 +322,7 @@ function MonitorCard({ monitor }: { monitor: any }) {
 
         {/* Header: avatar + name + status */}
         <div className="flex items-center gap-3 mb-4">
-          {/* Avatar with status badge */}
-          <div className="relative shrink-0">
-            <div className={`w-12 h-12 rounded-xl overflow-hidden bg-muted/30 border-2 transition-colors ${
-              isDown ? "border-red-500/40" : isUp ? "border-green-500/30" : "border-border/60"
-            }`}>
-              <MonitorAvatar name={monitor.name} size={48} className="w-full h-full" />
-            </div>
-            <div className="absolute -bottom-1 -right-1 flex items-center justify-center">
-              {isUp && <span className="absolute inline-flex h-3.5 w-3.5 rounded-full bg-green-500 opacity-60 animate-ping" />}
-              {isDown && <span className="absolute inline-flex h-3.5 w-3.5 rounded-full bg-red-500 opacity-60 animate-ping" />}
-              <span className={`relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-background ${
-                isUp ? "bg-green-500" : isDown ? "bg-red-500" : "bg-gray-500"
-              }`} />
-            </div>
-          </div>
+          <MonitorAvatar name={monitor.name} size={52} status={monitor.status} pulse />
 
           {/* Name + URL */}
           <div className="flex-1 min-w-0">
