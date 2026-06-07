@@ -141,17 +141,9 @@ export function Layout({ children }: LayoutProps) {
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground dark relative">
-      {/* Ambient background */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_at_top,black_10%,transparent_70%)]" />
-        <div className="absolute -top-40 left-1/4 w-[600px] h-[600px] rounded-full bg-primary/10 blur-[140px] animate-float" />
-        <div className="absolute top-1/3 -right-32 w-[480px] h-[480px] rounded-full bg-sky-500/8 blur-[130px] animate-float" style={{ animationDelay: "2.5s" }} />
-        <div className="absolute bottom-0 left-1/3 w-[420px] h-[420px] rounded-full bg-indigo-500/8 blur-[120px] animate-float" style={{ animationDelay: "4s" }} />
-      </div>
-
+    <div className="min-h-screen bg-background text-foreground dark">
       {/* Mobile header */}
-      <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border glass sticky top-0 z-50">
+      <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-card/80 backdrop-blur sticky top-0 z-50">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
             <Activity className="w-4 h-4 text-primary-foreground" />
@@ -173,16 +165,16 @@ export function Layout({ children }: LayoutProps) {
         </div>
       )}
 
-      <div className="flex relative z-10">
+      <div className="flex">
         {/* Desktop sidebar */}
-        <aside className="hidden md:flex w-52 min-h-screen border-r border-border/60 glass flex-col sticky top-0 self-start">
+        <aside className="hidden md:flex w-52 min-h-screen border-r border-border bg-card/40 flex-col sticky top-0 self-start">
           <SidebarContent />
         </aside>
 
         {/* Main content */}
         <main className="flex-1 min-w-0">
           {/* Top bar with breadcrumbs */}
-          <div className="hidden md:flex items-center gap-2 px-6 py-3 border-b border-border/60 glass sticky top-0 z-20">
+          <div className="hidden md:flex items-center gap-2 px-6 py-3 border-b border-border/60 bg-background/60 backdrop-blur sticky top-0 z-10">
             {breadcrumbs.map((crumb, i) => (
               <span key={i} className="flex items-center gap-2 text-sm">
                 {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" />}
