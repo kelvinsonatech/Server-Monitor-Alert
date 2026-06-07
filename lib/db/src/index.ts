@@ -11,6 +11,13 @@ if (!process.env.DATABASE_URL) {
 }
 
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+// Without this handler a transient DB disconnect (e.g. Replit control-plane
+// maintenance) emits an unhandled 'error' event which crashes the Node process.
+pool.on("error", (err) => {
+  console.error("[db] idle client error — will reconnect on next query:", err.message);
+});
+
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";
