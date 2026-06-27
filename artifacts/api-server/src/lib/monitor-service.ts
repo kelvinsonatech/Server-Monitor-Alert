@@ -93,8 +93,7 @@ export async function runCheck(monitorId: number, manual = false): Promise<void>
         text = [
           `⚠️ <b>ALERT — ${monitor.name} IS DOWN</b> ⚠️`,
           ``,
-          `📛 <b>Monitor:</b> ${monitor.name}`,
-          `🌐 <b>URL:</b> <code>${monitor.url}</code>${errorLine}`,
+          `📛 <b>Monitor:</b> ${monitor.name}${errorLine}`,
           `🕐 <b>Detected at:</b> ${now}`,
           ``,
           `<i>PingAlert will notify you again when it recovers.</i>`,
@@ -104,8 +103,7 @@ export async function runCheck(monitorId: number, manual = false): Promise<void>
         text = [
           `✅ <b>Manual Check — Server is UP</b>`,
           ``,
-          `📛 <b>Monitor:</b> ${monitor.name}`,
-          `🌐 <b>URL:</b> <code>${monitor.url}</code>${respLine}`,
+          `📛 <b>Monitor:</b> ${monitor.name}${respLine}`,
           `🕐 <b>Checked at:</b> ${now}`,
         ].join("\n");
       }
